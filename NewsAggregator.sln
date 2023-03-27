@@ -1,8 +1,28 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewsScrapper", "NewsScrapper\NewsScrapper.csproj", "{93DA5D3E-B6D8-4A07-BCA0-2466962C2B4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj", "{095A298D-043E-4461-99D4-7CF269E77420}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EKsuNewsScrapper", "EKsuNewsScrapper\EKsuNewsScrapper.csproj", "{95DC89AA-B864-40D6-A104-88BD2501AA7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93DA5D3E-B6D8-4A07-BCA0-2466962C2B4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93DA5D3E-B6D8-4A07-BCA0-2466962C2B4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93DA5D3E-B6D8-4A07-BCA0-2466962C2B4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93DA5D3E-B6D8-4A07-BCA0-2466962C2B4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{095A298D-043E-4461-99D4-7CF269E77420}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{095A298D-043E-4461-99D4-7CF269E77420}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{095A298D-043E-4461-99D4-7CF269E77420}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{095A298D-043E-4461-99D4-7CF269E77420}.Release|Any CPU.Build.0 = Release|Any CPU
+		{95DC89AA-B864-40D6-A104-88BD2501AA7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{95DC89AA-B864-40D6-A104-88BD2501AA7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{95DC89AA-B864-40D6-A104-88BD2501AA7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{95DC89AA-B864-40D6-A104-88BD2501AA7C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
