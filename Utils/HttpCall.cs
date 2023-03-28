@@ -65,7 +65,7 @@ public class HttpCall
 
         var result = (response.ContentType) switch
         {
-            "application/xml" => DeserializeXml<T>(response.RawBytes),
+            "application/xml" => DeserializeXml<T>(response.RawBytes!),
             "application/json" =>
                 JsonSerializer.Deserialize<T>(response),
             _ =>

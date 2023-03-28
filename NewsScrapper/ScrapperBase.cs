@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Reflection;
+using Infrastructure;
 using NewsScrapper.Models;
 using NLog;
 using NLog.Config;

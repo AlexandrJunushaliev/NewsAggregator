@@ -1,18 +1,19 @@
-﻿using EKsuNewsScrapper.Domain;
-using EKsuNewsScrapper.Models;
-using EKsuNewsScrapper.Validators;
-using NewsScrapper.Models;
+﻿using EKsuNewsScrapperService.Domain;
+using EKsuNewsScrapperService.Models;
+using EKsuNewsScrapperService.Validators;
+using Microsoft.Extensions.Logging;
+using NLog;
 using Utils;
 
-namespace EKsuNewsScrapper.Steps;
+namespace EKsuNewsScrapperService.Steps;
 
-public class GetContentList : IScrapperWalkStepStart<Task<GetContentListResponseEntry[]>>
+public class GetContentList
 {
     private readonly GetContentListValidator _contentListValidator;
 
-    public GetContentList()
+    public GetContentList(ILogger<GetContentListValidator> logger)
     {
-        _contentListValidator = new GetContentListValidator();
+        _contentListValidator = new GetContentListValidator(logger);
     }
 
     public async Task<GetContentListResponseEntry[]> Step()

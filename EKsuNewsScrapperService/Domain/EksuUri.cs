@@ -1,10 +1,10 @@
-﻿namespace EKsuNewsScrapper.Domain;
+﻿namespace EKsuNewsScrapperService.Domain;
 
 public static class EksuUri
 {
     private const string EKsuBaseUri = "https://shelly.kpfu.ru/e-ksu/";
-    private static readonly Uri GetContentList = new Uri(EKsuBaseUri + "ss_journal.get_content_list");
-    private static readonly Uri GetContent = new Uri(EKsuBaseUri + "ss_journal.get_content");
+    private static readonly Uri GetContentList = new(EKsuBaseUri + "ss_journal.get_content_list");
+    private static readonly Uri GetContent = new(EKsuBaseUri + "ss_journal.get_content");
 
     public static Uri BuildGetContentListRequest(DateTime forDate, PortalContentType portalContentType,
         bool isChangedRequest)

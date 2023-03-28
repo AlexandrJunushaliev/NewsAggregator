@@ -9,12 +9,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-      <ProjectReference Include="..\NewsScrapper\NewsScrapper.csproj" />
+      <ProjectReference Include="..\NewsScrapperBase\NewsScrapperBase.csproj" />
       <ProjectReference Include="..\Utils\Utils.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
       <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
     </ItemGroup>
 
