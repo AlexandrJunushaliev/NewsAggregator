@@ -1,13 +1,5 @@
-﻿using System.Diagnostics;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
-using Microsoft.Extensions.Logging;
-using NLog;
+﻿using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using ILogger = NLog.ILogger;
 
 namespace Infrastructure;
 
@@ -58,12 +50,11 @@ public abstract class RabbitMqClientBase : IDisposable
                     routingKey: QueueAndExchangeRoutingKey);
             }
         }
-        catch (Exception _)
+        catch (Exception ex)
         {
-            _logger.LogCritical("Error occured while connected to RabbitMq");
+            _logger.LogCritical(ex, "Error occured while connected to RabbitMq");
             throw;
         }
-        
     }
 
     public void Dispose()
@@ -83,87 +74,4 @@ public abstract class RabbitMqClientBase : IDisposable
             _logger.LogCritical(ex, "Cannot dispose RabbitMQ channel or connection");
         }
     }
-}
-
-public class RabbitClient
-{
-    private readonly string _queueName;
-    private readonly ConnectionFactory _factory;
-    private static readonly ILogger Logger = LogManager.GetCurrentClassLogger();
-
-    public RabbitClient(string hostname, string queueName)
-    {
-        _queueName = queueName;
-        _factory = new ConnectionFactory() { HostName = hostname };
-
-        using var connection = _factory.CreateConnection();
-        using var channel = connection.CreateModel();
-
-        channel.QueueDeclare(queue: queueName,
-            durable: false,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
-    }
-
-
-    public void SendMessageJson<T>(T message)
-    {
-        var sw = new Stopwatch();
-        using var connection = _factory.CreateConnection();
-        using var channel = connection.CreateModel();
-        var serialized = JsonSerializer.Serialize(message, _options);
-        channel.BasicPublish(string.Empty, _queueName, body: Encoding.UTF8.GetBytes(serialized));
-        Logger.Trace($"Rabbit: Message was sent to queue {_queueName} in {sw.Elapsed}: {serialized}");
-    }
-
-    public void SubscribeToQueueWithAsync<T>(Func<T, Task> func)
-    {
-        using var connection = _factory.CreateConnection();
-        using var channel = connection.CreateModel();
-        var consumer = new EventingBasicConsumer(channel);
-        consumer.Received += async (_, ea) =>
-        {
-            var stringMessage = Encoding.UTF8.GetString(ea.Body.Span);
-            var message = JsonSerializer.Deserialize<T>(stringMessage);
-            if (message is null)
-            {
-                Logger.Warn($"Rabbit: Empty or invalid message was returned from {_queueName}.{stringMessage}");
-            }
-            else
-                await func(message);
-        };
-        channel.BasicConsume(_queueName, autoAck: false, consumer);
-    }
-
-    public void SubscribeToQueue<T>(Action<T> func)
-    {
-        using var connection = _factory.CreateConnection();
-        using var channel = connection.CreateModel();
-        var consumer = new EventingBasicConsumer(channel);
-        consumer.Received += (_, ea) =>
-        {
-            var stringMessage = Encoding.UTF8.GetString(ea.Body.Span);
-            var message = JsonSerializer.Deserialize<T>(stringMessage);
-            if (message is null)
-            {
-                Logger.Warn($"Rabbit: Empty or invalid message was returned from {_queueName}.{stringMessage}");
-            }
-            else
-            {
-                try
-                {
-                    func(message);
-                }
-                finally
-                {
-                    _factory.CreateConnection().CreateModel().BasicAck(ea.DeliveryTag, false);
-                }
-            }
-        };
-        channel.BasicConsume(_queueName, autoAck: false, consumer);
-    }
-
-    private static JsonSerializerOptions _options = new()
-        { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 }

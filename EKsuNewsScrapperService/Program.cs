@@ -6,12 +6,8 @@ using EKsuNewsScrapperService.Steps;
 using Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using NewsScrapperBase;
-using NLog;
 using RabbitMQ.Client;
 using Utils;
-using ILogger = NLog.ILogger;
 
 namespace EKsuNewsScrapperService;
 

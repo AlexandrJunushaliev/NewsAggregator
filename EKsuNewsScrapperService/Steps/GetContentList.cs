@@ -2,7 +2,6 @@
 using EKsuNewsScrapperService.Models;
 using EKsuNewsScrapperService.Validators;
 using Microsoft.Extensions.Logging;
-using NLog;
 using Utils;
 
 namespace EKsuNewsScrapperService.Steps;

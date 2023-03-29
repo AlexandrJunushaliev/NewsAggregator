@@ -1,20 +1,26 @@
 ﻿using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ILogger = NLog.ILogger;
 
 namespace NewsScrapperBase;
 
 public class BaseBackgroundService : BackgroundService
 {
     private readonly ILogger<BaseBackgroundService> _logger;
+    private readonly IConfiguration _configuration;
 
-    public BaseBackgroundService(ILogger<BaseBackgroundService> logger)
+    public BaseBackgroundService(ILogger<BaseBackgroundService> logger, IConfiguration configuration)
     {
         _logger = logger;
+        _configuration = configuration;
     }
 
-    public async virtual Task Scrap() => _logger.LogTrace("I am teapot");
+    protected virtual Task Scrap()
+    {
+        _logger.LogTrace("I am teapot");
+        return Task.CompletedTask;
+    }
 
     private async Task BaseRoutine()
     {
@@ -33,10 +39,11 @@ public class BaseBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var sleepTimeMs = _configuration.GetValue<int>("sleepTimeMs");
         while (!stoppingToken.IsCancellationRequested)
         {
             await BaseRoutine();
-            await Task.Delay(10000000, stoppingToken);
+            await Task.Delay(sleepTimeMs == default ? TimeSpan.FromMinutes(5).Milliseconds : sleepTimeMs, stoppingToken);
         }
     }
 }

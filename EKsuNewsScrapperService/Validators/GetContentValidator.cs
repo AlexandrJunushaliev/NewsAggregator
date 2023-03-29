@@ -1,8 +1,6 @@
 ﻿using System.Text.Json;
 using EKsuNewsScrapperService.Models;
 using Microsoft.Extensions.Logging;
-using NLog;
-using ILogger = NLog.ILogger;
 
 namespace EKsuNewsScrapperService.Validators;
 

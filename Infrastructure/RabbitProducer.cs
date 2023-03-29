@@ -25,7 +25,7 @@ public abstract class RabbitProducer : RabbitMqClientBase
         {
             var sw = new Stopwatch();
             var serialized = JsonSerializer.Serialize(message, _options);
-            var properties = Channel.CreateBasicProperties();
+            var properties = Channel!.CreateBasicProperties();
             properties.AppId = AppId;
             properties.ContentType = "application/json";
             properties.DeliveryMode = 1; // Doesn't persist to disk
