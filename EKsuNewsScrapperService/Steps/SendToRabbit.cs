@@ -1,5 +1,6 @@
 ﻿using EKsuNewsScrapperService.Models;
 using Infrastructure;
+using NewsProcessor.Domain;
 
 namespace EKsuNewsScrapperService.Steps;
 

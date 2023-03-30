@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewsScrapperBase", "NewsScr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EKsuNewsScrapperService", "EKsuNewsScrapperService\EKsuNewsScrapperService.csproj", "{12319831-FF35-4A47-9979-8BC9B873EA17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewsProcessor", "NewsProcessor\NewsProcessor.csproj", "{BF82CD7F-FD30-4874-AA90-A67BBE6790DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{12319831-FF35-4A47-9979-8BC9B873EA17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12319831-FF35-4A47-9979-8BC9B873EA17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12319831-FF35-4A47-9979-8BC9B873EA17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF82CD7F-FD30-4874-AA90-A67BBE6790DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF82CD7F-FD30-4874-AA90-A67BBE6790DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF82CD7F-FD30-4874-AA90-A67BBE6790DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF82CD7F-FD30-4874-AA90-A67BBE6790DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

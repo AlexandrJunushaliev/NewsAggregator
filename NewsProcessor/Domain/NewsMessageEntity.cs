@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace EKsuNewsScrapperService.Models;
+namespace NewsProcessor.Domain;
 
 [DataContract]
 public class NewsMessageEntry

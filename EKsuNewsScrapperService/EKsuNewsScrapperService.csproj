@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+      <ProjectReference Include="..\NewsProcessor\NewsProcessor.csproj" />
       <ProjectReference Include="..\NewsScrapperBase\NewsScrapperBase.csproj" />
       <ProjectReference Include="..\Utils\Utils.csproj" />
     </ItemGroup>

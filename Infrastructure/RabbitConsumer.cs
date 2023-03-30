@@ -20,7 +20,7 @@ public abstract class RabbitConsumer : RabbitMqClientBase
         _logger = consumerLogger;
     }
 
-    protected void SetConsume<T>(Action<T> func)
+    public void SetConsume<T>(Action<T> func)
     {
         var consumer = new EventingBasicConsumer(Channel);
         consumer.Received += (_, ea) =>
