@@ -67,28 +67,29 @@ public class SearchIndex
         _semaphore.Release();
     }
 
-    public (DateTime lastProcessedTime, HashSet<SearchIndexEntryId> entries) Find(IEnumerable<string> keyWords, int take,
+    public HashSet<SearchIndexEntryId> Find(IEnumerable<string> keyWords, int take,
         int skip)
     {
         Dictionary<string, SearchIndexSortedSet>? index;
-        DateTime lastTimeProcessed;
         lock (_locker)
         {
             index = _index;
-            lastTimeProcessed = _lastProcessedTime;
         }
 
         var resultHashSet = new HashSet<SearchIndexEntryId>();
         foreach (var key in keyWords)
         {
-            var sl = index[key];
-            foreach (var id in sl.Skip(skip).Take(take))
+            if (index.TryGetValue(key, out var sl))
             {
-                resultHashSet.Add(id);
+                foreach (var id in sl.Skip(skip).Take(take))
+                {
+                    resultHashSet.Add(id);
+                }
             }
+            
         }
 
-        return (lastTimeProcessed, resultHashSet);
+        return resultHashSet;
     }
 
     private async Task SaveSnapshot()
@@ -135,7 +136,7 @@ public class SearchIndex
         _logger.LogInformation($"Snapshot loaded in {sw.Elapsed}");
     }
 
-    private Dictionary<string, SearchIndexSortedSet> _index = new();
+    private Dictionary<string, SearchIndexSortedSet> _index = new(StringComparer.OrdinalIgnoreCase);
     private object _locker = new();
     private DateTime _lastProcessedTime = DateTime.MinValue;
     private readonly SemaphoreSlim _semaphore = new(1);

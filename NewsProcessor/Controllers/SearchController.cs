@@ -13,8 +13,8 @@ public class SearchController
     {
         _searchIndex = searchIndex;
     }
-    public (DateTime lastProcessedTime, HashSet<SearchIndexEntryId> entries) Get(string[] keywords, int take, int skip)
-    {
-        return _searchIndex.Find(keywords, take, skip);
-    }
+
+    public HashSet<SearchIndexEntryId> Get(string[] keywords, int take, int skip)
+        => _searchIndex.Find(keywords, take, skip);
+
 }
