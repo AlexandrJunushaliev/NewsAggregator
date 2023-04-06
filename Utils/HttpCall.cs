@@ -63,30 +63,48 @@ public class HttpCall
             return new HttpResponse<T>(uri);
         }
 
-        var result = (response.ContentType) switch
+        try
         {
-            "application/xml" => DeserializeXml<T>(response.RawBytes!),
-            "application/json" =>
-                JsonSerializer.Deserialize<T>(response),
-            _ =>
-                throw new Exception($"Unknown ContentType: {response.ContentType}")
-        };
-        if (result is null)
-        {
-            Log.Fatal($"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
-            return new HttpResponse<T>(uri);
-        }
+            var result = (response.ContentType) switch
+            {
+                "application/xml" => DeserializeXml<T>(response.RawBytes!),
+                "application/json" =>
+                    JsonSerializer.Deserialize<T>(response),
+                _ =>
+                    throw new Exception($"Unknown ContentType: {response.ContentType}")
+            };
+            if (result is null)
+            {
+                Log.Fatal($"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
+                return new HttpResponse<T>(uri);
+            }
 
-        return new HttpResponse<T>(result, uri);
+            return new HttpResponse<T>(result, uri);
+        }
+        catch (Exception e)
+        {
+            Log.Fatal(e, $"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
+            throw;
+        }
+        
     }
 
     private static T? DeserializeXml<T>(byte[] bytes)
     {
-        using var ms = new MemoryStream(bytes);
-        using var sr = new StreamReader(ms, Encoding.GetEncoding(1251));
-        var xmlSerializer1 = new XmlSerializer(typeof(T));
-        var deserialized = (T?)xmlSerializer1.Deserialize(sr);
-        return deserialized;
+        try
+        {
+            using var ms = new MemoryStream(bytes);
+            using var sr = new StreamReader(ms, Encoding.GetEncoding(1251));
+            var xmlSerializer1 = new XmlSerializer(typeof(T));
+            var deserialized = (T?)xmlSerializer1.Deserialize(sr);
+            return deserialized;
+        }
+        catch (Exception e)
+        { 
+            Log.Error(e, $"Error occured on deserializaton of xml.");
+            return default;
+        }
+        
     }
 
     private static readonly ILogger Log = LogManager.GetCurrentClassLogger();

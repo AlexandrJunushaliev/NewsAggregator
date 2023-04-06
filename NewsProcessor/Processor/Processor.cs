@@ -1,14 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using HtmlAgilityPack;
-using Lucene.Net.Analysis.Standard;
-using Lucene.Net.Documents;
-using Lucene.Net.Index;
-using Lucene.Net.Store;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NewsProcessor.Domain;
-using Version = Lucene.Net.Util.Version;
+using Utils;
 
 namespace NewsProcessor.Processor;
 
@@ -21,24 +16,30 @@ public class Processor
     {
         _logger = logger;
         _keywords = keywords.Select(x => (keyword: x, splitted: x.Split(SplitCharsetArray,
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stemmer.GetStemmed).ToArray()))
+                    StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stemmer.GetStemmed)
+                .ToArray()))
             .ToArray();
     }
 
-    public Dictionary<string, NewsMessageEntry[]> Process(NewsMessageEntry[] newsMessageEntries)
+    public Dictionary<string, HashSet<SearchIndexEntry>> Process(NewsMessageEntry[] newsMessageEntries)
     {
+        var now = DateTime.UtcNow;
         _logger.LogInformation(
             $"Starting process of {newsMessageEntries.Length} entries. Keywords are as following {JsonSerializer.Serialize(_keywords)}");
         var sw = new Stopwatch();
         sw.Start();
-        var result = newsMessageEntries.SelectMany(ProcessOneEntry).GroupBy(x => x.Key)
-            .Select(x => (x.Key, x.Select(y => y.Value).ToArray()))
+        var result = newsMessageEntries
+            .Select(x=>ProcessOneEntry(x, now))
+            .Where(x => x is not null)!
+            .Flatten()
+            .GroupBy(x => x.Key)
+            .Select(x => (x.Key, x.Select(y => y.Value).ToHashSet()))
             .ToDictionary(x => x.Key, y => y.Item2);
         _logger.LogInformation($"Processed in {sw.Elapsed}");
         return result;
     }
 
-    private IEnumerable<KeyValuePair<string, NewsMessageEntry>>? ProcessOneEntry(NewsMessageEntry entry)
+    private IEnumerable<KeyValuePair<string, SearchIndexEntry>>? ProcessOneEntry(NewsMessageEntry entry, DateTime dateTime)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(entry.Text);
@@ -46,14 +47,14 @@ public class Processor
         if (text is null)
         {
             _logger.LogCritical(
-                $"Unable to parse retrieve innerText from news id {entry.Id}. Perhaps html in Text field is incorrect");
+                $"Unable to parse retrieve innerText from news id {entry.Id}. Perhaps html in Text field is incorrect. Text was {entry.Text}");
             return null;
         }
 
-        return FindKeywordsInText(entry, text);
+        return FindKeywordsInText(entry, text, dateTime);
     }
 
-    private IEnumerable<KeyValuePair<string, NewsMessageEntry>> FindKeywordsInText(NewsMessageEntry entry, string text)
+    private IEnumerable<KeyValuePair<string, SearchIndexEntry>> FindKeywordsInText(NewsMessageEntry entry, string text, DateTime dateTime)
     {
         var splitted = text.Split(SplitCharsetArray,
             StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stemmer.GetStemmed);
@@ -68,12 +69,12 @@ public class Processor
 
             if (NGram.FindAsNGrams(splitted, keyword.splitted, keyword.splitted.Length))
             {
-                yield return new KeyValuePair<string, NewsMessageEntry>(keyword.keyword, entry);
+                yield return new KeyValuePair<string, SearchIndexEntry>(keyword.keyword, new SearchIndexEntry(int.Parse(entry.Id), dateTime));
             }
         }
     }
 
-    private static HashSet<char> SplitCharset = new HashSet<char>()
+    private static HashSet<char> SplitCharset = new()
         { ' ', ',', '.', ':', ';', '-', '_', '|', '#', '!', '@', '<', '>' };
 
     private static char[] SplitCharsetArray = SplitCharset.ToArray();

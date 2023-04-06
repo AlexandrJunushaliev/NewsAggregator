@@ -1,11 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Unicode;
 using NewsProcessor.Domain;
-using Newtonsoft.Json;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace NewsProcessor.Index;
 
@@ -26,14 +23,14 @@ public class SearchIndex
             {
                 var sw = new Stopwatch();
                 _logger.LogInformation("Start adding to index");
-                var entries = newEntries.SelectMany(x => x.Value).ToHashSet();
-                var newIndex = new Dictionary<string, SortedList<SearchIndexEntryId, SearchIndexEntry>>();
+                var entries = newEntries.SelectMany(x => x.Value).Select(x=>x.Id).ToHashSet();
+                var newIndex = new Dictionary<string, SearchIndexSortedSet>();
                 foreach (var kvp in newEntries)
                 {
-                    newIndex[kvp.Key] = new SortedList<SearchIndexEntryId, SearchIndexEntry>();
+                    newIndex[kvp.Key] = new SearchIndexSortedSet();
                     foreach (var entry in kvp.Value)
                     {
-                        newIndex[kvp.Key].Add(entry.Id, default);
+                        newIndex[kvp.Key].Add(entry.Id);
                     }
                 }
 
@@ -41,15 +38,15 @@ public class SearchIndex
                 {
                     if (!newIndex.ContainsKey(kvp.Key))
                     {
-                        newIndex[kvp.Key] = new SortedList<SearchIndexEntryId, SearchIndexEntry>();
+                        newIndex[kvp.Key] = new SearchIndexSortedSet();
                     }
 
                     foreach (var entry in kvp.Value)
                     {
-                        if (!entries.Contains(entry.Value))
+                        if (!entries.Contains(entry))
                         {
-                            if (!newIndex[kvp.Key].ContainsKey(entry.Key))
-                                newIndex[kvp.Key].Add(entry.Key, entry.Value);
+                            if (!newIndex[kvp.Key].Contains(entry))
+                                newIndex[kvp.Key].Add(entry);
                         }
                     }
                 }
@@ -70,10 +67,10 @@ public class SearchIndex
         _semaphore.Release();
     }
 
-    public (DateTime lastProcessedTime, HashSet<SearchIndexEntry> entries) Find(IEnumerable<string> keyWords, int take,
+    public (DateTime lastProcessedTime, HashSet<SearchIndexEntryId> entries) Find(IEnumerable<string> keyWords, int take,
         int skip)
     {
-        Dictionary<string, SortedList<SearchIndexEntryId, SearchIndexEntry>>? index;
+        Dictionary<string, SearchIndexSortedSet>? index;
         DateTime lastTimeProcessed;
         lock (_locker)
         {
@@ -81,28 +78,13 @@ public class SearchIndex
             lastTimeProcessed = _lastProcessedTime;
         }
 
-        var resultHashSet = new HashSet<SearchIndexEntry>();
+        var resultHashSet = new HashSet<SearchIndexEntryId>();
         foreach (var key in keyWords)
         {
             var sl = index[key];
-            if (skip > sl.Count)
+            foreach (var id in sl.Skip(skip).Take(take))
             {
-                continue;
-            }
-
-            if (take + skip >= sl.Count)
-            {
-                for (var i = sl.Count - 1 - skip; i >= 0; i--)
-                {
-                    resultHashSet.Add(sl.Values[i]);
-                }
-
-                continue;
-            }
-
-            for (var i = sl.Count - 1 - skip; i > sl.Count - 1 - skip - take; i--)
-            {
-                resultHashSet.Add(sl.Values[i]);
+                resultHashSet.Add(id);
             }
         }
 
@@ -113,7 +95,7 @@ public class SearchIndex
     {
         _logger.LogInformation($"Start saving snapshot");
         var sw = new Stopwatch();
-        Dictionary<string, SortedList<SearchIndexEntryId, SearchIndexEntry>>? index;
+        Dictionary<string, SearchIndexSortedSet>? index;
         lock (_locker)
         {
             index = _index;
@@ -141,7 +123,7 @@ public class SearchIndex
         _logger.LogInformation($"Start loading snapshot");
         var sw = new Stopwatch();
         var newInd =
-            JsonSerializer.Deserialize<Dictionary<string, SortedList<SearchIndexEntryId, SearchIndexEntry>>>(
+            JsonSerializer.Deserialize<Dictionary<string, SearchIndexSortedSet>>(
                 File.Open(SnapshotLocation, FileMode.Open), Options
             );
         lock (_locker)
@@ -153,7 +135,7 @@ public class SearchIndex
         _logger.LogInformation($"Snapshot loaded in {sw.Elapsed}");
     }
 
-    private Dictionary<string, SortedList<SearchIndexEntryId, SearchIndexEntry>> _index = new();
+    private Dictionary<string, SearchIndexSortedSet> _index = new();
     private object _locker = new();
     private DateTime _lastProcessedTime = DateTime.MinValue;
     private readonly SemaphoreSlim _semaphore = new(1);

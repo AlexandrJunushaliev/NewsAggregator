@@ -34,7 +34,7 @@ public abstract class RabbitProducer : RabbitMqClientBase
                 body: Encoding.UTF8.GetBytes(serialized),
                 basicProperties: properties);
             _logger.LogTrace(
-                $"Rabbit: Message with props:{JsonSerializer.Serialize(properties)}was sent to exchange {Exchange} with routing key {RoutingKeyName} in {sw.Elapsed}: {serialized}");
+                $"Rabbit: Message with props:{JsonSerializer.Serialize(properties)} was sent to exchange {Exchange} with routing key {RoutingKeyName} in {sw.Elapsed}: {serialized}");
         }
         catch (Exception ex)
         {

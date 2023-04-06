@@ -14,7 +14,7 @@ public readonly struct SearchIndexEntryId : IComparable
     public SearchIndexEntryId(int id, DateTime dateTime)
     {
         Id = id;
-        DateTime = dateTime;
+        DateTime = dateTime.ToUniversalTime().Date;
     }
 
     public override bool Equals(object? obj)

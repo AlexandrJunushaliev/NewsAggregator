@@ -2,36 +2,6 @@
 
 namespace NewsProcessor.Processor;
 
-public static class ChatgptStem
-{
-    public class RussianSnowballStemmer
-    {
-        private static readonly Regex perfectiveGerundRegex = new Regex("(ив(ши(й|е|х|ми?)?)?|ыв(ши(й|е|х|ми?)?)?)$");
-        private static readonly Regex reflexiveRegex = new Regex("(ся|сь)$");
-        private static readonly Regex adjectiveRegex = new Regex("(ее|ие|ые|ое|ими|ыми|ей|ий|ый|ой|ем|им|ым|ом|его|ого|ему|ому|их|ых|ую|юю|ая|яя|ою|ею)?$");
-        private static readonly Regex participleRegex = new Regex("(ивш(и(й|е|х|ми?)?)?|ывш(и(й|е|х|ми?)?)?|ующ(и(й|е|х|ми?)?)?)$");
-        private static readonly Regex verbRegex = new Regex("(ла|на|ете|йте|ли|й|л|ем|н(о|а|ы)?|ло|ет(е)?|ют|ны|ть(ся)?|ешь)?$");
-        private static readonly Regex nounRegex = new Regex("(а|ев|ов|ье|иями|ями|ами|еи|ии|и|ей|ой|ий|й(о|е|а)?|иям|ям|ием|ем|ам|ом|о(в|й|м)?|у|ах|иях|ях|ы)?$");
-        private static readonly Regex superlativeRegex = new Regex("(ейш(е|ий|ая|ую|ем|им|их|ую|ые|ое|ие|ый)?)?$");
-        private static readonly Regex derivationalRegex = new Regex("(ост(ь)?|ость)?$");
-
-        public static string Stem(string word)
-        {
-            word = word.ToLower();
-            word = perfectiveGerundRegex.Replace(word, "");
-            word = reflexiveRegex.Replace(word, "");
-            word = adjectiveRegex.Replace(word, "");
-            word = participleRegex.Replace(word, "");
-            word = verbRegex.Replace(word, "");
-            word = nounRegex.Replace(word, "");
-            word = superlativeRegex.Replace(word, "");
-            word = derivationalRegex.Replace(word, "");
-
-            return word;
-        }
-    }
-
-}
 public static class Stemmer
 {
 
@@ -157,7 +127,6 @@ public static class Stemmer
                     var deletePart = groupCollection[i].ToString();
                     stringTemp = stringTemp.Replace(deletePart, string.Empty);
                 }
-
             }
         }
         return stringTemp;
