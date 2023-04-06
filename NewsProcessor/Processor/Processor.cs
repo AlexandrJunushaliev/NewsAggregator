@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using HtmlAgilityPack;
-using Microsoft.Extensions.Logging;
 using NewsProcessor.Domain;
 using Utils;
 

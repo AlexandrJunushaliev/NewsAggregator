@@ -1,10 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using Infrastructure;
-using NewsProcessor;
+﻿using NewsProcessor;
 using NewsProcessor.Domain;
 using NewsProcessor.Index;
-using NewsProcessor.Processor;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client;

@@ -1,12 +1,4 @@
 ﻿namespace NewsProcessor.Processor;
-
-public enum NGramRange
-{
-    One,
-    Two,
-    Three
-}
-
 public class NGram
 {
     public static bool FindAsNGrams(IEnumerable<string> words, string[] wordToFind, int range)
