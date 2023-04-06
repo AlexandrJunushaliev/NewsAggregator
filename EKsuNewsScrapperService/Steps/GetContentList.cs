@@ -17,7 +17,7 @@ public class GetContentList
 
     public async Task<GetContentListResponseEntry[]> Step()
     {
-        var now = DateTime.Now.AddDays(-1);
+        var now = DateTime.Now;
         var tasks = TypesToCheck
             .Select(x => GetUris(x, now))
             .Flatten()
