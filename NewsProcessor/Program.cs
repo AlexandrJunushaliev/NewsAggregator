@@ -1,10 +1,10 @@
-﻿using NewsProcessor;
-using NewsProcessor.Domain;
+﻿using NewsProcessor.Domain;
 using NewsProcessor.Index;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+
+namespace NewsProcessor;
 
 class Program
 {
@@ -32,7 +32,7 @@ class Program
             builder.AddNLog(new XmlLoggingConfiguration("NLog.config"));
         });
         services.AddHostedService<NewsProcessorService>();
-        services.AddSingleton<ConnectionFactory>(sp => new ConnectionFactory()
+        services.AddSingleton<ConnectionFactory>(_ => new ConnectionFactory()
         {
             HostName = "localhost"
         });
