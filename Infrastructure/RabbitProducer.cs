@@ -24,6 +24,7 @@ public abstract class RabbitProducer : RabbitMqClientBase
         try
         {
             var sw = new Stopwatch();
+            sw.Start();
             var serialized = JsonSerializer.Serialize(message, _options);
             var properties = Channel!.CreateBasicProperties();
             properties.AppId = AppId;

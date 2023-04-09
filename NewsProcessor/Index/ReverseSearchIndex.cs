@@ -20,8 +20,9 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
     {
         await _semaphore.WaitAsync();
         {
-            var sw = new Stopwatch();
             _logger.LogInformation("Start adding to index");
+            var sw = new Stopwatch();
+            sw.Start();
             var entries = newEntries.SelectMany(x => x.Value).Select(x => x.Id).ToHashSet();
             var newIndex = new Dictionary<string, SearchIndexSortedSet>();
             foreach (var kvp in newEntries)

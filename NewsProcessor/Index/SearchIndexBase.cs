@@ -20,6 +20,7 @@ public abstract class SearchIndexBase<T>
     {
         _logger.LogInformation($"Start saving snapshot");
         var sw = new Stopwatch();
+        sw.Start();
         T? index;
         lock (locker)
         {
@@ -47,6 +48,7 @@ public abstract class SearchIndexBase<T>
 
         _logger.LogInformation($"Start loading snapshot");
         var sw = new Stopwatch();
+        sw.Start();
         var newInd =
             JsonSerializer.Deserialize<T>(
                 File.Open(Path.Combine(SnapshotDir, GetSnapshotFileName()), FileMode.Open), Options

@@ -18,8 +18,9 @@ public class SearchIndex : SearchIndexBase<Dictionary<SearchIndexEntryId, HashSe
     {
         await _semaphore.WaitAsync();
         {
-            var sw = new Stopwatch();
             _logger.LogInformation("Start adding to index");
+            var sw = new Stopwatch();
+            sw.Start();
             var entries = newEntries.Keys.Select(x=>x.Id).ToArray();
             var newIndex = new Dictionary<SearchIndexEntryId, HashSet<string>>();
             foreach (var kvp in newEntries)

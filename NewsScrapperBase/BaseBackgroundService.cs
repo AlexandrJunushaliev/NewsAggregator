@@ -26,6 +26,7 @@ public class BaseBackgroundService : BackgroundService
     {
         _logger.LogTrace($"Scrapper work started at {DateTime.Now}");
         var sw = new Stopwatch();
+        sw.Start();
         try
         {
             await Scrap();
