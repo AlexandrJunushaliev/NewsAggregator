@@ -15,11 +15,10 @@ public class GetContentList
         _contentListValidator = new GetContentListValidator(logger);
     }
 
-    public async Task<GetContentListResponseEntry[]> Step()
+    public async Task<GetContentListResponseEntry[]> Step(DateTime forDate)
     {
-        var now = DateTime.Now;
         var tasks = TypesToCheck
-            .Select(x => GetUris(x, now))
+            .Select(x => GetUris(x, forDate))
             .Flatten()
             .Select(HttpCall.Get<GetContentListResponse>)
             .ToList();

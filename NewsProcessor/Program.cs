@@ -13,7 +13,7 @@ class Program
         var builder = WebApplication.CreateBuilder(args);
         ConfigureServices(builder.Services);
         builder.Services.AddControllers();
-        
+
         var app = builder.Build();
         app.MapControllers();
         await app.RunAsync();
@@ -36,13 +36,19 @@ class Program
         {
             HostName = "localhost"
         });
+        services.AddSingleton<ReverseSearchIndex>(sp =>
+        {
+            var reverseSearchIndex = new ReverseSearchIndex(sp.GetService<ILogger<ReverseSearchIndex>>()!,
+                sp.GetService<ILogger<SearchIndexBase<Dictionary<string, SearchIndexSortedSet>>>>()!);
+            reverseSearchIndex.LoadSnapshot();
+            return reverseSearchIndex;
+        });
         services.AddSingleton<SearchIndex>(sp =>
         {
-            var index = new SearchIndex(sp.GetService<ILogger<SearchIndex>>()!);
-            index.LoadSnapshot();
-            return index;
+            var searchIndex = new SearchIndex(sp.GetService<ILogger<SearchIndex>>()!,
+                sp.GetService<ILogger<SearchIndexBase<Dictionary<SearchIndexEntryId, HashSet<string>>>>>()!);
+            searchIndex.LoadSnapshot();
+            return searchIndex;
         });
     }
-    
-    
 }

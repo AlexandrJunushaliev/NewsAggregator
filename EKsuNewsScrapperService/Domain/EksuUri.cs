@@ -11,7 +11,7 @@ public static class EksuUri
     {
         var uriBuilder = new UriBuilder(GetContentList)
         {
-            Query = $"p_day={forDate:dd.MM.yyyy}&p_portal_content_type={(int)portalContentType}{(isChangedRequest ? "p_type=1" : string.Empty)}"
+            Query = $"p_day={forDate:dd.MM.yyyy}&p_portal_content_type={(int)portalContentType}{(isChangedRequest ? "&p_type=1" : string.Empty)}"
         };
         return uriBuilder.Uri;
     }

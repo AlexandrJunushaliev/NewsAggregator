@@ -8,14 +8,15 @@ namespace NewsProcessor;
 class NewsProcessorService : RabbitConsumer, IHostedService
 {
     public NewsProcessorService(IConfiguration configuration, ILogger<Processor.Processor> processorLogger, ILogger<RabbitConsumer> baseLogger,
-        ILogger<RabbitMqClientBase> clientLogger, ConnectionFactory factory, SearchIndex index) : base(factory,
+        ILogger<RabbitMqClientBase> clientLogger, ConnectionFactory factory, ReverseSearchIndex reverseIndex, SearchIndex searchIndex) : base(factory,
         baseLogger,
         clientLogger)
     {
         SetConsume<NewsMessageEntry[]>((news) =>
         {
             var processor = new Processor.Processor(processorLogger, configuration.GetSection("keyWords").Get<string[]>()!);
-            index.AddToIndex(processor.Process(news)).GetAwaiter().GetResult();
+            var (reverseProcessed, forwardProcessed ) = processor.Process(news);
+            Task.WhenAny(reverseIndex.AddToIndex(reverseProcessed), searchIndex.AddToIndex(forwardProcessed)).GetAwaiter().GetResult();
         });
     }
 

@@ -1,150 +1,77 @@
 ﻿using System.Diagnostics;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
 using NewsProcessor.Domain;
 
 namespace NewsProcessor.Index;
 
-public class SearchIndex
+public class SearchIndex : SearchIndexBase<Dictionary<SearchIndexEntryId, HashSet<string>>>
 {
     private readonly ILogger<SearchIndex> _logger;
 
-    public SearchIndex(ILogger<SearchIndex> logger)
+    public SearchIndex(ILogger<SearchIndex> logger,
+        ILogger<SearchIndexBase<Dictionary<SearchIndexEntryId, HashSet<string>>>> baseLogger) : base(baseLogger,
+        new Dictionary<SearchIndexEntryId, HashSet<string>>())
     {
         _logger = logger;
     }
 
-    public async Task AddToIndex(Dictionary<string, HashSet<SearchIndexEntry>> newEntries)
+    public async Task AddToIndex(Dictionary<SearchIndexEntry, HashSet<string>> newEntries)
     {
         await _semaphore.WaitAsync();
         {
-            try
+            var sw = new Stopwatch();
+            _logger.LogInformation("Start adding to index");
+            var entries = newEntries.Keys.Select(x=>x.Id).ToArray();
+            var newIndex = new Dictionary<SearchIndexEntryId, HashSet<string>>();
+            foreach (var kvp in newEntries)
             {
-                var sw = new Stopwatch();
-                _logger.LogInformation("Start adding to index");
-                var entries = newEntries.SelectMany(x => x.Value).Select(x=>x.Id).ToHashSet();
-                var newIndex = new Dictionary<string, SearchIndexSortedSet>();
-                foreach (var kvp in newEntries)
+                newIndex[kvp.Key.Id] = new HashSet<string>();
+                foreach (var entry in kvp.Value)
                 {
-                    newIndex[kvp.Key] = new SearchIndexSortedSet();
-                    foreach (var entry in kvp.Value)
-                    {
-                        newIndex[kvp.Key].Add(entry.Id);
-                    }
+                    newIndex[kvp.Key.Id].Add(entry);
                 }
-
-                foreach (var kvp in _index)
-                {
-                    if (!newIndex.ContainsKey(kvp.Key))
-                    {
-                        newIndex[kvp.Key] = new SearchIndexSortedSet();
-                    }
-
-                    foreach (var entry in kvp.Value)
-                    {
-                        if (!entries.Contains(entry))
-                        {
-                            if (!newIndex[kvp.Key].Contains(entry))
-                                newIndex[kvp.Key].Add(entry);
-                        }
-                    }
-                }
-
-                lock (_locker)
-                {
-                    _index = newIndex;
-                    _lastProcessedTime = DateTime.UtcNow;
-                }
-
-                _logger.LogInformation($"Adding finished in {sw.Elapsed}");
-                await SaveSnapshot();
             }
-            catch
+
+            foreach (var kvp in Index)
             {
+                if (!entries.Contains(kvp.Key))
+                {
+                    newIndex.Add(kvp.Key, kvp.Value);
+                }
             }
+
+            lock (_locker)
+            {
+                Index = newIndex;
+            }
+
+            _logger.LogInformation($"Adding finished in {sw.Elapsed}");
+            await SaveSnapshot(_locker);
         }
         _semaphore.Release();
     }
 
-    public HashSet<SearchIndexEntryId> Find(IEnumerable<string> keyWords, int take,
-        int skip)
+    public Dictionary<SearchIndexEntryId, HashSet<string>> FindKeyWords(IEnumerable<SearchIndexEntryId> news)
     {
-        Dictionary<string, SearchIndexSortedSet>? index;
+        Dictionary<SearchIndexEntryId, HashSet<string>>? index;
         lock (_locker)
         {
-            index = _index;
+            index = Index;
         }
 
-        var resultHashSet = new HashSet<SearchIndexEntryId>();
-        foreach (var key in keyWords)
+        var result = new Dictionary<SearchIndexEntryId, HashSet<string>>();
+        foreach (var key in news)
         {
-            if (index.TryGetValue(key, out var sl))
-            {
-                foreach (var id in sl.Skip(skip).Take(take))
-                {
-                    resultHashSet.Add(id);
-                }
-            }
-            
+            if (index.ContainsKey(key))
+                result.Add(key, index[key]);
         }
 
-        return resultHashSet;
+        return result;
     }
 
-    private async Task SaveSnapshot()
-    {
-        _logger.LogInformation($"Start saving snapshot");
-        var sw = new Stopwatch();
-        Dictionary<string, SearchIndexSortedSet>? index;
-        lock (_locker)
-        {
-            index = _index;
-        }
+    public void LoadSnapshot() => LoadSnapshot(_locker);
 
-        if (!Directory.Exists(SnapshotDir))
-            Directory.CreateDirectory(SnapshotDir);
-
-        await using (var fs = File.Create(SnapshotLocation + ".tmp"))
-        {
-            await JsonSerializer.SerializeAsync(fs, index, Options);
-        }
-
-        File.Move(SnapshotLocation + ".tmp", SnapshotLocation, true);
-        _logger.LogInformation($"Snapshot saved in {sw.Elapsed}");
-    }
-
-    public void LoadSnapshot()
-    {
-        if (!File.Exists(SnapshotLocation))
-        {
-            return;
-        }
-
-        _logger.LogInformation($"Start loading snapshot");
-        var sw = new Stopwatch();
-        var newInd =
-            JsonSerializer.Deserialize<Dictionary<string, SearchIndexSortedSet>>(
-                File.Open(SnapshotLocation, FileMode.Open), Options
-            );
-        lock (_locker)
-        {
-            _index = newInd!;
-        }
-
-        GC.Collect(3, GCCollectionMode.Forced);
-        _logger.LogInformation($"Snapshot loaded in {sw.Elapsed}");
-    }
-
-    private Dictionary<string, SearchIndexSortedSet> _index = new(StringComparer.OrdinalIgnoreCase);
-    private object _locker = new();
-    private DateTime _lastProcessedTime = DateTime.MinValue;
     private readonly SemaphoreSlim _semaphore = new(1);
-    private const string SnapshotDir = "snapshots";
-    private static readonly string SnapshotLocation = Path.Combine(SnapshotDir, "snapshot");
+    private readonly object _locker = new object();
 
-    private static readonly JsonSerializerOptions Options = new()
-    {
-        Converters = { new SearchIndexEntryIdJsonConverter() }, Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
-    };
+    protected override string GetSnapshotFileName() => "snapshot";
 }

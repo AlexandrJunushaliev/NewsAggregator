@@ -4,30 +4,47 @@ namespace NewsProcessor.Processor;
 
 public static class Stemmer
 {
-
-    private static Regex _perfectiveground = new("((ив|ивши|ившись|ыв|ывши|ывшись)|((<;=[ая])(в|вши|вшись)))$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _perfectiveground = new("((ив|ивши|ившись|ыв|ывши|ывшись)|((<;=[ая])(в|вши|вшись)))$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     private static Regex _reflexive = new("(с[яь])$");
 
-    private static Regex _adjective = new("(ее|ие|ые|ое|ими|ыми|ей|ий|ый|ой|ем|им|ым|ом|его|ого|ему|ому|их|ых|ую|юю|ая|яя|ою|ею)$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _adjective =
+        new("(ее|ие|ые|ое|ими|ыми|ей|ий|ый|ой|ем|им|ым|ом|его|ого|ему|ому|их|ых|ую|юю|ая|яя|ою|ею)$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _participle = new("((ивш|ывш|ующ)|((?<=[ая])(ем|нн|вш|ющ|щ)))$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _participle = new("((ивш|ывш|ующ)|((?<=[ая])(ем|нн|вш|ющ|щ)))$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _verb = new("((ила|ыла|ена|ейте|уйте|ите|или|ыли|ей|уй|ил|ыл|им|ым|ен|ило|ыло|ено|ят|ует|уют|ит|ыт|ены|ить|ыть|ишь|ую|ю)|((?<=[ая])(ла|на|ете|йте|ли|й|л|ем|н|ло|но|ет|ют|ны|ть|ешь|нно)))$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _verb =
+        new(
+            "((ила|ыла|ена|ейте|уйте|ите|или|ыли|ей|уй|ил|ыл|им|ым|ен|ило|ыло|ено|ят|ует|уют|ит|ыт|ены|ить|ыть|ишь|ую|ю)|((?<=[ая])(ла|на|ете|йте|ли|й|л|ем|н|ло|но|ет|ют|ны|ть|ешь|нно)))$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _noun = new("(а|ев|ов|ие|ье|е|иями|ями|ами|еи|ии|и|ией|ей|ой|ий|й|иям|ям|ием|ем|ам|ом|о|у|ах|иях|ях|ы|ь|ию|ью|ю|ия|ья|я)$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _noun =
+        new(
+            "(а|ев|ов|ие|ье|е|иями|ями|ами|еи|ии|и|ией|ей|ой|ий|й|иям|ям|ием|ем|ам|ом|о|у|ах|иях|ях|ы|ь|ию|ью|ю|ия|ья|я)$",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _rvre = new("^(.*?[аеиоуыэюя])(.*)$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _rvre = new("^(.*?[аеиоуыэюя])(.*)$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _derivational = new(".*[^аеиоуыэюя]+[аеиоуыэюя].*ость?$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _derivational = new(".*[^аеиоуыэюя]+[аеиоуыэюя].*ость?$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _der = new("ость?$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _der = new("ость?$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _superlative = new("(ейше|ейш)$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _superlative = new("(ейше|ейш)$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static Regex _ = new("и$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
-    private static Regex _p = new("ь$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
-    private static Regex _nn = new("нн$", RegexOptions.Compiled|RegexOptions.CultureInvariant|RegexOptions.IgnoreCase);
+    private static Regex _ = new("и$", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static Regex _p = new("ь$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    private static Regex _nn = new("нн$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
     public static string GetStemmed(string word)
     {
@@ -70,7 +87,6 @@ public static class Stemmer
                         rv = stringTemp;
                     }
                 }
-
             }
             else
             {
@@ -98,10 +114,9 @@ public static class Stemmer
             {
                 rv = stringTemp;
             }
+
             word = pre + rv;
-
         }
-
         return word;
     }
 
@@ -129,6 +144,7 @@ public static class Stemmer
                 }
             }
         }
+
         return stringTemp;
     }
 }

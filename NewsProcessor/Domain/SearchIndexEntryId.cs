@@ -44,4 +44,23 @@ public readonly struct SearchIndexEntryId : IComparable
             return Id.CompareTo(id.Id);
         return cmp;
     }
+
+    public static SearchIndexEntryId Parse(string str)
+    {
+        return SearchIndexEntryIdJsonConverter.ReadIdFromJsonString(str);
+    }
+    
+    public static bool TryParse(string str, out SearchIndexEntryId id)
+    {
+        id = default;
+        try
+        {
+            id = Parse(str);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }
