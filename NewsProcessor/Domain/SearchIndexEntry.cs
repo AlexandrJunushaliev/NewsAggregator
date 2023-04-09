@@ -8,7 +8,7 @@ public readonly struct SearchIndexEntry
     [DataMember]
     public readonly SearchIndexEntryId Id;
 
-    public SearchIndexEntry(int id, DateTime dateTime)
+    public SearchIndexEntry(string id, DateTime dateTime)
     {
         Id = new SearchIndexEntryId(id, dateTime);
     }

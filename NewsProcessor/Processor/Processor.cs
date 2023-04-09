@@ -11,13 +11,14 @@ public class Processor
     private readonly ILogger<Processor> _logger;
     private readonly (string keyword, string[] splitted )[] _keywords;
 
-    public Processor(ILogger<Processor> logger, string[] keywords)
+    public Processor(ILogger<Processor> logger, string[] keywords, Func<string, string> stem)
     {
         _logger = logger;
         _keywords = keywords.Select(x => (keyword: x, splitted: x.Split(SplitCharsetArray,
-                    StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stemmer.GetStemmed)
+                    StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(stem)
                 .ToArray()))
             .ToArray();
+        Stem = stem;
     }
 
     public (Dictionary<string, HashSet<SearchIndexEntry>>, Dictionary<SearchIndexEntry, HashSet<string>>) Process(
@@ -73,7 +74,7 @@ public class Processor
         DateTime dateTime)
     {
         var splitted = text.Split(SplitCharsetArray,
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stemmer.GetStemmed)
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stem)
             .ToArray();
         foreach (var keyword in _keywords)
         {
@@ -87,7 +88,7 @@ public class Processor
             if (NGram.FindAsNGrams(splitted, keyword.splitted, keyword.splitted.Length))
             {
                 yield return new KeyValuePair<string, SearchIndexEntry>(keyword.keyword,
-                    new SearchIndexEntry(int.Parse(entry.Id),
+                    new SearchIndexEntry(entry.Id,
                         /*DateTime.TryParse(entry.UpdDate, out var updDate)
                             ? updDate
                             : */DateTime.TryParse(entry.RegDate, out var regDate)
@@ -99,6 +100,8 @@ public class Processor
 
     private static readonly HashSet<char> SplitCharset = new()
         { ' ', ',', '.', ':', ';', '-', '_', '|', '#', '!', '@', '<', '>' };
+
+    private readonly Func<string, string> Stem;
 
     private static readonly char[] SplitCharsetArray = SplitCharset.ToArray();
 }

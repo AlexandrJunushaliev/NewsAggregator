@@ -6,12 +6,12 @@ namespace NewsProcessor.Domain;
 public readonly struct SearchIndexEntryId : IComparable
 {
     [DataMember]
-    public readonly int Id;
+    public readonly string Id;
 
     [DataMember]
     public readonly DateTime DateTime;
 
-    public SearchIndexEntryId(int id, DateTime dateTime)
+    public SearchIndexEntryId(string id, DateTime dateTime)
     {
         Id = id;
         DateTime = dateTime.ToUniversalTime().Date;

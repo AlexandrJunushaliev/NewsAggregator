@@ -43,9 +43,7 @@ public class SearchIndexEntryIdJsonConverter : JsonConverter<SearchIndexEntryId>
             throw GetArgumentException(str);
         if (!DateTime.TryParseExact(split[0], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dt))
             throw GetArgumentException(str);
-        if (!int.TryParse(split[1], out var id))
-            throw GetArgumentException(str);
-        return new SearchIndexEntryId(id, dt);
+        return new SearchIndexEntryId(split[1], dt);
     }
 
     private static ArgumentException GetArgumentException(string str) =>

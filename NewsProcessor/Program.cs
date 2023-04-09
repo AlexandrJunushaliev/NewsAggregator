@@ -3,6 +3,7 @@ using NewsProcessor.Index;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client;
+using Snowball;
 
 namespace NewsProcessor;
 
@@ -50,5 +51,6 @@ class Program
             searchIndex.LoadSnapshot();
             return searchIndex;
         });
+        services.AddSingleton<RussianStemmer>(_ => new RussianStemmer());
     }
 }

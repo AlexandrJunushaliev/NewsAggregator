@@ -21,7 +21,8 @@ public class EKsuNewsScrapperBase : NewsScrapperBase.NewsScrapperBase
         {
             HostName = "localhost"
         });
-        serviceCollection.AddSingleton<RabbitProducer,NewsRabbitMqProducer>();
+        serviceCollection.AddSingleton<NewsRabbitMqProducer>();
+        serviceCollection.AddSingleton<NewsApiRabbitMqProducer>();
         serviceCollection.AddSingleton<GetContents>();
         serviceCollection.AddSingleton<GetContentList>();
         serviceCollection.AddSingleton<SendToRabbit>();

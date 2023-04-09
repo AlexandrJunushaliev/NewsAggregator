@@ -9,7 +9,7 @@ public class NewsMessageEntry
     public string Id { get; set; } = null!;
 
     [DataMember(EmitDefaultValue = false)]
-    public string? Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [DataMember(EmitDefaultValue = false)]
     public string? Header { get; set; }
@@ -24,20 +24,20 @@ public class NewsMessageEntry
     public string? MainImage { get; set; }
 
     [DataMember(EmitDefaultValue = false)]
-    public string UrlOfDepartment { get; set; } = null!;
+    public string SourceUrl { get; set; } = null!;
+    
+    [DataMember(EmitDefaultValue = false)]
+    public string SourceName { get; set; } = null!;
 
     [DataMember(EmitDefaultValue = false)]
-    public string UrlOfPost { get; set; } = null!;
+    public string NewsUrl { get; set; } = null!;
 
     [DataMember(EmitDefaultValue = false)]
-    public string[]? VideoUrl { get; set; }
+    public string[]? VideoUrls { get; set; }
 
     [DataMember(EmitDefaultValue = false)]
     public string? UpdDate { get; set; }
 
     [DataMember(EmitDefaultValue = false)]
     public string RegDate { get; set; } = null!;
-
-    [DataMember(EmitDefaultValue = false)]
-    public string? Status { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using EKsuNewsScrapperService.Models;
+﻿using EKsuNewsScrapperService.Domain;
+using EKsuNewsScrapperService.Models;
 using Infrastructure;
 using NewsProcessor.Domain;
 
@@ -6,11 +7,14 @@ namespace EKsuNewsScrapperService.Steps;
 
 public class SendToRabbit
 {
-    private readonly RabbitProducer _rabbitClient;
+    private readonly RabbitProducer _processorProducer;
+    private readonly RabbitProducer _apiProducer;
 
-    public SendToRabbit(RabbitProducer rabbitClient)
+    public SendToRabbit(NewsRabbitMqProducer processorProducer,
+        NewsApiRabbitMqProducer apiProducer)
     {
-        _rabbitClient = rabbitClient;
+        _processorProducer = processorProducer;
+        _apiProducer = apiProducer;
     }
 
     public void Step(GetContentResponse[] news)
@@ -20,16 +24,16 @@ public class SendToRabbit
             Id = x.Id!,
             Text = x.Text!,
             Images = x.Images?.ImagesUrls,
-            UrlOfDepartment = x.UrlOfDepartment!,
-            UrlOfPost = x.UrlOfPost!,
-            Title = x.Title,
-            Header = x.Header,
+            SourceName = x.UrlOfDepartment!,
+            SourceUrl = $"https://kpfu.ru/{x.UrlOfDepartment!}",
+            NewsUrl = $"https://kpfu.ru/{x.UrlOfPost!}.html",
+            Title = (x.Title ?? x.Header)!,
             MainImage = x.Picture,
-            Status = x.Status,
             RegDate = x.RegDate!,
-            UpdDate = x.UpdDate!,
-            VideoUrl = x.VideoUrl
+            UpdDate = x.UpdDate,
+            VideoUrls = x.VideoUrl
         }).ToArray();
-        _rabbitClient.Publish(message);
+        _processorProducer.Publish(message);
+        _apiProducer.Publish(message);
     }
 }

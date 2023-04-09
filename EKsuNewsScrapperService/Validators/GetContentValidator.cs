@@ -45,9 +45,9 @@ public class GetContentValidator : IValidator<GetContentResponse>
             return false;
         }
         
-        if (entity.RegDate is null)
+        if (entity.RegDate is null || !DateTime.TryParse(entity.RegDate, out _))
         {
-            _logger.LogCritical($"There is no reg_date in entity:{JsonSerializer.Serialize(entity)}");
+            _logger.LogCritical($"There is no reg_date in entity or incorrect format:{JsonSerializer.Serialize(entity)}");
             return false;
         }
 
