@@ -35,7 +35,8 @@ public abstract class SearchIndexBase<T>
             await JsonSerializer.SerializeAsync(fs, index, Options);
         }
 
-        File.Move(Path.Combine(SnapshotDir, GetSnapshotFileName()) + ".tmp", Path.Combine(SnapshotDir, GetSnapshotFileName()), true);
+        File.Move(Path.Combine(SnapshotDir, GetSnapshotFileName()) + ".tmp",
+            Path.Combine(SnapshotDir, GetSnapshotFileName()), true);
         _logger.LogInformation($"Snapshot saved in {sw.Elapsed}");
     }
 
@@ -65,6 +66,8 @@ public abstract class SearchIndexBase<T>
     protected T Index;
     private const string SnapshotDir = "snapshots";
     protected abstract string GetSnapshotFileName();
+
+    // ReSharper disable once StaticMemberInGenericType
     private static readonly JsonSerializerOptions Options = new()
     {
         Converters = { new SearchIndexEntryIdJsonConverter() }, Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)

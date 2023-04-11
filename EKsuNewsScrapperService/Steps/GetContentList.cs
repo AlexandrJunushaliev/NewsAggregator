@@ -20,7 +20,7 @@ public class GetContentList
         var tasks = TypesToCheck
             .Select(x => GetUris(x, forDate))
             .Flatten()
-            .Select(HttpCall.Get<GetContentListResponse>)
+            .Select(x => HttpCall.Get<GetContentListResponse>(x))
             .ToList();
 
         return (await Task.WhenAll(tasks))

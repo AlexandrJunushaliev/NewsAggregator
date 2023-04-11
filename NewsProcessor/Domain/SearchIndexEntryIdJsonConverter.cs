@@ -32,7 +32,7 @@ public class SearchIndexEntryIdJsonConverter : JsonConverter<SearchIndexEntryId>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private string GetIdAsJsonString(SearchIndexEntryId value) => $"{value.DateTime:yyyyMMdd}_{value.Id}";
+    public static string GetIdAsJsonString(SearchIndexEntryId value) => $"{value.DateTime:yyyyMMdd}_{value.Id}";
 
     public static SearchIndexEntryId ReadIdFromJsonString(string? str)
     {

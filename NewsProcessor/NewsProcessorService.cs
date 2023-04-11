@@ -13,7 +13,7 @@ class NewsProcessorService : RabbitConsumer, IHostedService
         baseLogger,
         clientLogger)
     {
-        SetConsume<NewsMessageEntry[]>((news) =>
+        SetConsume<NewsMessageEntry[]>(news =>
         {
             var processor = new Processor.Processor(processorLogger, configuration.GetSection("keyWords").Get<string[]>()!, russianStemmer.Stem);
             var (reverseProcessed, forwardProcessed ) = processor.Process(news);

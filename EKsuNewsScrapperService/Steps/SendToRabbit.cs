@@ -27,11 +27,12 @@ public class SendToRabbit
             SourceName = x.UrlOfDepartment!,
             SourceUrl = $"https://kpfu.ru/{x.UrlOfDepartment!}",
             NewsUrl = $"https://kpfu.ru/{x.UrlOfPost!}.html",
-            Title = (x.Title ?? x.Header)!,
+            Title = x.Title,
             MainImage = x.Picture,
             RegDate = x.RegDate!,
             UpdDate = x.UpdDate,
-            VideoUrls = x.VideoUrl
+            VideoUrls = x.VideoUrl,
+            Header = x.Header
         }).ToArray();
         _processorProducer.Publish(message);
         _apiProducer.Publish(message);

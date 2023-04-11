@@ -9,7 +9,7 @@ public class NewsMessageEntry
     public string Id { get; set; } = null!;
 
     [DataMember(EmitDefaultValue = false)]
-    public string Title { get; set; } = null!;
+    public string? Title { get; set; }
 
     [DataMember(EmitDefaultValue = false)]
     public string? Header { get; set; }

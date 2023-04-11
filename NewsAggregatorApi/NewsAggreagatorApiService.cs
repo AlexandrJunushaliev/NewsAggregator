@@ -5,17 +5,18 @@ using NewsAggregatorApi.Models;
 using NewsProcessor.Domain;
 using NewsProcessor.Index;
 using RabbitMQ.Client;
+using Utils;
 
 namespace NewsAggregatorApi;
 
-class NewsProcessorService : RabbitConsumer, IHostedService
+class NewsAggreagatorApiService : RabbitConsumer, IHostedService
 {
-    public NewsProcessorService(ILogger<RabbitConsumer> baseLogger,
+    public NewsAggreagatorApiService(ILogger<RabbitConsumer> baseLogger,
         ILogger<RabbitMqClientBase> clientLogger, ConnectionFactory factory, IServiceProvider sp) : base(factory,
         baseLogger,
         clientLogger)
     {
-        SetConsume<NewsMessageEntry[]>((news) =>
+        SetConsume<NewsMessageEntry[]>(news =>
         {
             using (var scope = sp.CreateScope())
             {
@@ -30,12 +31,16 @@ class NewsProcessorService : RabbitConsumer, IHostedService
                     var article = new Article
                     {
                         Id = entry.Id,
-                        RegistrationDate = DateTime.Parse(entry.RegDate).ToUniversalTime(),
+                        RegistrationDate = DateTimeExtensions.ParseAssumeUniversal(entry.RegDate),
                         UpdateDate = entry.UpdDate is null ? default :
-                            DateTime.TryParse(entry.UpdDate, out var upd) ? upd.ToUniversalTime() : default,
+                            DateTimeExtensions.TryParseAssumeUniversal(entry.UpdDate, out var upd) ? upd : default,
                         Text = entry.Text,
                         SourceName = entry.SourceName,
-                        Title = entry.Title, SourceSite = entry.SourceUrl, ArticleUrl = entry.NewsUrl
+                        Title = entry.Title?.Trim(), 
+                        SourceSite = entry.SourceUrl,
+                        ArticleUrl = entry.NewsUrl,
+                        Status = Status.None,
+                        Header = entry.Header?.Trim()
                     };
                     if (toUpdateIds.Contains(entry.Id))
                         dbContext.Update(article);

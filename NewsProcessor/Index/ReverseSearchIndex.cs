@@ -11,7 +11,8 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
     private readonly ILogger<ReverseSearchIndex> _logger;
 
     public ReverseSearchIndex(ILogger<ReverseSearchIndex> logger,
-        ILogger<SearchIndexBase<Dictionary<string, SearchIndexSortedSet>>> baseLogger) : base(baseLogger, new Dictionary<string, SearchIndexSortedSet>())
+        ILogger<SearchIndexBase<Dictionary<string, SearchIndexSortedSet>>> baseLogger) : base(baseLogger,
+        new Dictionary<string, SearchIndexSortedSet>())
     {
         _logger = logger;
     }
@@ -62,7 +63,8 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
         _semaphore.Release();
     }
 
-    public HashSet<SearchIndexEntryId> Find(IEnumerable<string> keyWords, int take, int skip)
+    public IEnumerable<SearchIndexEntryId> Find(IEnumerable<string> keyWords, int take, int skip, bool fromOlder,
+        DateTime? leftBorder, DateTime? rightBorder)
     {
         Dictionary<string, SearchIndexSortedSet>? index;
         lock (_locker)
@@ -70,19 +72,88 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
             index = Index;
         }
 
-        var resultHashSet = new HashSet<SearchIndexEntryId>();
-        foreach (var key in keyWords)
+        try
         {
-            if (index.TryGetValue(key, out var sl))
-            {
-                foreach (var id in sl.Skip(skip).Take(take))
-                {
-                    resultHashSet.Add(id);
-                }
-            }
+            return IterateEntriesInOrder(keyWords, index, fromOlder, leftBorder, rightBorder).Skip(skip).Take(take);
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical($"Exception happen on search request {e}");
+            return Array.Empty<SearchIndexEntryId>();
+        }
+    }
+    
+    public int Count(IEnumerable<string> keyWords,
+        DateTime? leftBorder, DateTime? rightBorder)
+    {
+        Dictionary<string, SearchIndexSortedSet>? index;
+        lock (_locker)
+        {
+            index = Index;
         }
 
-        return resultHashSet;
+        try
+        {
+            return IterateEntriesInOrder(keyWords, index, false, leftBorder, rightBorder).Count();
+        }
+        catch (Exception e)
+        {
+            _logger.LogCritical($"Exception happen on search request {e}");
+            return default;
+        }
+    }
+
+    private static IEnumerable<SearchIndexEntryId> IterateEntriesInOrder(IEnumerable<string> keywords,
+        Dictionary<string, SearchIndexSortedSet> index, bool fromOlder, DateTime? left, DateTime? right)
+    {
+        var firstElements = keywords
+            .Where(index.ContainsKey)
+            .Select(x =>
+                left != null && right != null
+                    ? index[x].GetViewBetween(
+                        new SearchIndexEntryId(string.Empty, right.Value),
+                        new SearchIndexEntryId(string.Empty, left.Value))
+                    : index[x])
+            .Select(x => !fromOlder ? x : x.Reverse())
+            .Where(x => x.Any())
+            .Select(x => x.GetEnumerator())
+            .ToArray();
+        var finished = new HashSet<int>();
+        foreach (var firstElement in firstElements)
+        {
+            firstElement.MoveNext();
+        }
+
+        SearchIndexEntryId lastReturned = default;
+        var olderDefault = new SearchIndexEntryId(string.Empty, DateTime.MaxValue);
+        while (true)
+        {
+            if (finished.Count == firstElements.Length)
+                yield break;
+            var maxI = 0;
+            var maxId = fromOlder ? olderDefault : default;
+
+            for (var i = 0; i < firstElements.Length; i++)
+            {
+                if (finished.Contains(i))
+                    continue;
+                var curr = firstElements[i].Current;
+                if (fromOlder ? curr < maxId : curr > maxId)
+                {
+                    maxId = curr;
+                    maxI = i;
+                }
+            }
+
+            if (!firstElements[maxI].MoveNext())
+            {
+                finished.Add(maxI);
+            }
+
+            if (lastReturned == maxId) continue;
+            lastReturned = maxId;
+            yield return maxId;
+        }
     }
 
     public void LoadSnapshot() => LoadSnapshot(_locker);

@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NewsAggregatorApi.Domain;
 using NewsAggregatorApi.Infrastructure.EntityFramework;
 using NewsProcessor.Domain;
+using NewsProcessor.Index;
 using NLog.Config;
 using NLog.Extensions.Logging;
 using RabbitMQ.Client;
@@ -32,11 +34,12 @@ public class Startup
         {
             options.UseNpgsql(_configuration.GetConnectionString("NpgSqlConnection"));
         });
-        services.AddHostedService<NewsProcessorService>();
+        services.AddHostedService<NewsAggreagatorApiService>();
         services.AddSingleton<ConnectionFactory>(_ => new ConnectionFactory()
         {
             HostName = "localhost"
         });
+        services.AddSingleton<SearchIndexClient>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

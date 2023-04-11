@@ -37,6 +37,11 @@ public abstract class RabbitConsumer : RabbitMqClientBase
                 {
                     func(message);
                 }
+                catch(Exception e)
+                {
+                    _logger.LogCritical($"Processing of message failed: {e}. Will try to requeue");
+                    Channel!.BasicReject(ea.DeliveryTag, true);
+                }
                 finally
                 {
                     Channel!.BasicAck(ea.DeliveryTag, false);

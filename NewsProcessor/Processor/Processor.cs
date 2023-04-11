@@ -18,7 +18,7 @@ public class Processor
                     StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(stem)
                 .ToArray()))
             .ToArray();
-        Stem = stem;
+        _stem = stem;
     }
 
     public (Dictionary<string, HashSet<SearchIndexEntry>>, Dictionary<SearchIndexEntry, HashSet<string>>) Process(
@@ -62,10 +62,11 @@ public class Processor
         {
             _logger.LogCritical(
                 $"Unable to parse retrieve innerText from news id {entry.Id}. Perhaps html in Text field is incorrect. Text was {entry.Text}");
-            return default;
+            if (entry.Header is null && entry.Title is null)
+                return default;
         }
 
-        var foundedKeyWords = FindKeywordsInText(entry, text, dateTime).ToArray();
+        var foundedKeyWords = FindKeywordsInText(entry, text+$" {entry.Title}"+ $"{ entry.Header}", dateTime).ToArray();
         return (foundedKeyWords,
             foundedKeyWords.Select(x => new KeyValuePair<SearchIndexEntry, string>(x.Value, x.Key)));
     }
@@ -74,7 +75,7 @@ public class Processor
         DateTime dateTime)
     {
         var splitted = text.Split(SplitCharsetArray,
-                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(Stem)
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(_stem)
             .ToArray();
         foreach (var keyword in _keywords)
         {
@@ -91,7 +92,7 @@ public class Processor
                     new SearchIndexEntry(entry.Id,
                         /*DateTime.TryParse(entry.UpdDate, out var updDate)
                             ? updDate
-                            : */DateTime.TryParse(entry.RegDate, out var regDate)
+                            : */DateTimeExtensions.TryParseAssumeUniversal(entry.RegDate, out var regDate)
                             ? regDate
                             : dateTime));
             }
@@ -99,9 +100,9 @@ public class Processor
     }
 
     private static readonly HashSet<char> SplitCharset = new()
-        { ' ', ',', '.', ':', ';', '-', '_', '|', '#', '!', '@', '<', '>' };
+        { ' ', ',', '.', ':', ';', '-', '_', '|', '#', '!', '@', '<', '>', ')', '(' };
 
-    private readonly Func<string, string> Stem;
+    private readonly Func<string, string> _stem;
 
     private static readonly char[] SplitCharsetArray = SplitCharset.ToArray();
 }

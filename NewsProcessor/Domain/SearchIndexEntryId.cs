@@ -49,7 +49,7 @@ public readonly struct SearchIndexEntryId : IComparable
     {
         return SearchIndexEntryIdJsonConverter.ReadIdFromJsonString(str);
     }
-    
+
     public static bool TryParse(string str, out SearchIndexEntryId id)
     {
         id = default;
@@ -62,5 +62,25 @@ public readonly struct SearchIndexEntryId : IComparable
         {
             return false;
         }
+    }
+
+    public static bool operator <(SearchIndexEntryId s1, SearchIndexEntryId s2)
+    {
+        return s1.CompareTo(s2) == -1;
+    }
+
+    public static bool operator >(SearchIndexEntryId s1, SearchIndexEntryId s2)
+    {
+        return s1.CompareTo(s2) == 1;
+    }
+    
+    public static bool operator ==(SearchIndexEntryId s1, SearchIndexEntryId s2)
+    {
+        return s1.CompareTo(s2) == 0;
+    }
+    
+    public static bool operator !=(SearchIndexEntryId s1, SearchIndexEntryId s2)
+    {
+        return s1.CompareTo(s2) != 0;
     }
 }

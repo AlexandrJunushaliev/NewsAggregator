@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using System.Xml.Serialization;
 using NLog;
 using RestSharp;
@@ -41,52 +42,70 @@ public class HttpResponse<T>
 
 public class HttpCall
 {
-    public static async Task<HttpResponse<T>> Get<T>(Uri uri)
+    public static async Task<HttpResponse<T>> Get<T>(Uri uri, int timeoutMs = 2000,
+        JsonSerializerOptions? jsonSerializerOptions = null)
     {
-        var restClient = new RestClient();
+        var options = new RestClientOptions
+        {
+            ThrowOnAnyError = true,
+            MaxTimeout = timeoutMs
+        };
+        var restClient = new RestClient(options);
         var restRequest = new RestRequest(uri);
         var sw = new Stopwatch();
         Log.Trace($"Request to {uri} started");
         sw.Start();
-        var response = await restClient.GetAsync(restRequest);
-        sw.Stop();
-        Log.Trace($"Request to {uri} finished in {sw.Elapsed}");
-        if (!response.IsSuccessStatusCode)
-        {
-            Log.Fatal($"Request to {uri} failed with code {response.StatusCode}");
-            return new HttpResponse<T>(uri);
-        }
-
-        if (response.ContentLength == 0)
-        {
-            Log.Warn($"Request to {uri} return empty response");
-            return new HttpResponse<T>(uri);
-        }
-
         try
         {
-            var result = (response.ContentType) switch
+            var response = await restClient.GetAsync(restRequest);
+            if (!response.IsSuccessStatusCode)
             {
-                "application/xml" => DeserializeXml<T>(response.RawBytes!),
-                "application/json" =>
-                    JsonSerializer.Deserialize<T>(response),
-                _ =>
-                    throw new Exception($"Unknown ContentType: {response.ContentType}")
-            };
-            if (result is null)
-            {
-                Log.Fatal($"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
+                Log.Fatal($"Request to {uri} failed with code {response.StatusCode}");
                 return new HttpResponse<T>(uri);
             }
 
-            return new HttpResponse<T>(result, uri);
+            if (response.ContentLength == 0)
+            {
+                Log.Warn($"Request to {uri} return empty response");
+                return new HttpResponse<T>(uri);
+            }
+
+            try
+            {
+                var result = (response.ContentType) switch
+                {
+                    "application/xml" => DeserializeXml<T>(response.RawBytes!),
+                    "application/json" =>
+                        DeserializeJson<T>(response!, jsonSerializerOptions),
+                    _ =>
+                        throw new Exception($"Unknown ContentType: {response.ContentType}")
+                };
+                if (result is null)
+                {
+                    Log.Fatal(
+                        $"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
+                    return new HttpResponse<T>(uri);
+                }
+
+                return new HttpResponse<T>(result, uri);
+            }
+            catch (Exception e)
+            {
+                Log.Fatal(e,
+                    $"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
+                throw;
+            }
         }
         catch (Exception e)
         {
-            Log.Fatal(e, $"Unable to parse response of {uri} as provided type {typeof(T)}. Response: {response.Content}");
-            throw;
+            Log.Fatal(e, $"Unable to process request to {uri}. Exception happened {e}");
+            return new HttpResponse<T>(uri);
         }
-        
+        finally
+        {
+            sw.Stop();
+            Log.Trace($"Request to {uri} finished in {sw.Elapsed}");
+        }
     }
 
     private static T? DeserializeXml<T>(byte[] bytes)
@@ -100,14 +119,25 @@ public class HttpCall
             return deserialized;
         }
         catch (Exception e)
-        { 
+        {
             Log.Error(e, $"Error occured on deserializaton of xml.");
             return default;
         }
-        
+    }
+
+    private static T? DeserializeJson<T>(RestResponse restResponse, JsonSerializerOptions? options)
+    {
+        try
+        {
+            var serializer = options == null ? new SystemTextJsonSerializer() : new SystemTextJsonSerializer(options);
+            return serializer.Deserialize<T>(restResponse);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, $"Error occured on deserializaton of json.");
+            return default;
+        }
     }
 
     private static readonly ILogger Log = LogManager.GetCurrentClassLogger();
-
-    private static readonly SystemTextJsonSerializer JsonSerializer = new();
 }
