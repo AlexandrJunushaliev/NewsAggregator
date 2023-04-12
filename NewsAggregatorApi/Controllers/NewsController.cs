@@ -39,7 +39,8 @@ public class NewsController
             var queue = _context.Articles.Select(x => new ApiNews
             {
                 NewsText = x.Text, RegistrationDate = x.RegistrationDate, SourceName = x.SourceName,
-                SourceSite = x.SourceSite, Title = x.Title, Header = x.Header, Id = x.Id, Status = x.Status, NewsUrl = x.ArticleUrl
+                SourceSite = x.SourceSite, Title = x.Title, Header = x.Header, Id = x.Id, Status = x.Status,
+                NewsUrl = x.ArticleUrl, Images = x.Images, Videos = x.VideoUrls, MainPicture = x.Picture
             });
             queue = reverseOrder
                 ? queue.OrderBy(x => x.RegistrationDate)
@@ -51,7 +52,7 @@ public class NewsController
                 queue = queue.Where(x =>
                     x.RegistrationDate >= leftDt && x.RegistrationDate < rightDt);
             }
-                
+
             var news = queue.Skip(skip).Take(take).ToArray();
 
             var idsToKeywords = await _searchIndexClient.GetKeywords(news);
@@ -77,5 +78,12 @@ public class NewsController
             NewsText = x.Text, RegistrationDate = x.RegistrationDate, SourceName = x.SourceName,
             SourceSite = x.SourceSite, Title = x.Title, Header = x.Header, Id = x.Id
         }).Where(x => foundByKeywords.Contains(x.Id)).ToArray();
+    }
+
+    [HttpGet]
+    [Route("getKeywords")]
+    public async Task<string[]?> GetAvailableKeywords()
+    {
+        return await _searchIndexClient.GetAvailableKeywords();
     }
 }

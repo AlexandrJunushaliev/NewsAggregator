@@ -14,4 +14,7 @@ public class ApiNews
     public string Id { get; set; }
     public Status Status { get; set; }
     public string NewsUrl { get; set; }
+    public ICollection<Image>? Images { get; set; }
+    public ICollection<Video>? Videos { get; set; }
+    public MainImage? MainPicture { get; set; }
 }

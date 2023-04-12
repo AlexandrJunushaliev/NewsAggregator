@@ -1,4 +1,6 @@
-﻿namespace NewsAggregatorApi.Models;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+
+namespace NewsAggregatorApi.Models;
 
 public class Article
 {
@@ -12,4 +14,10 @@ public class Article
     public string Text { get; set; } = null!;
     public string ArticleUrl { get; set; } = null!;
     public Status Status { get; set; }
+    
+    public ICollection<Image>? Images { get; set; }
+    
+    public MainImage? Picture { get; set; }
+    
+    public ICollection<Video>? VideoUrls { get; set; }
 }

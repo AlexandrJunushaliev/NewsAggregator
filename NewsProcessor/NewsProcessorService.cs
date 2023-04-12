@@ -17,10 +17,9 @@ class NewsProcessorService : RabbitConsumer, IHostedService
         {
             var processor = new Processor.Processor(processorLogger, configuration.GetSection("keyWords").Get<string[]>()!, russianStemmer.Stem);
             var (reverseProcessed, forwardProcessed ) = processor.Process(news);
-            Task.WhenAny(reverseIndex.AddToIndex(reverseProcessed), searchIndex.AddToIndex(forwardProcessed)).GetAwaiter().GetResult();
+            Task.WhenAny(reverseIndex.AddToIndex(reverseProcessed, configuration.GetSection("keyWordsToDelete").Get<HashSet<string>>()), searchIndex.AddToIndex(forwardProcessed, configuration.GetSection("keyWordsToDelete").Get<HashSet<string>>())).GetAwaiter().GetResult();
         });
     }
-
 
     protected override string GetExchange() => "news";
     protected override string GetQueueAndExchangeRoutingKey() => "news";

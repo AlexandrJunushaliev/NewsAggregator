@@ -17,7 +17,8 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
         _logger = logger;
     }
 
-    public async Task AddToIndex(Dictionary<string, HashSet<SearchIndexEntry>> newEntries)
+    public async Task AddToIndex(Dictionary<string, HashSet<SearchIndexEntry>> newEntries,
+        HashSet<string>? wordsToDelete)
     {
         await _semaphore.WaitAsync();
         {
@@ -28,26 +29,32 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
             var newIndex = new Dictionary<string, SearchIndexSortedSet>();
             foreach (var kvp in newEntries)
             {
-                newIndex[kvp.Key] = new SearchIndexSortedSet();
-                foreach (var entry in kvp.Value)
+                if (wordsToDelete is null || !wordsToDelete.Contains(kvp.Key))
                 {
-                    newIndex[kvp.Key].Add(entry.Id);
+                    newIndex[kvp.Key] = new SearchIndexSortedSet();
+                    foreach (var entry in kvp.Value)
+                    {
+                        newIndex[kvp.Key].Add(entry.Id);
+                    }
                 }
             }
 
             foreach (var kvp in Index)
             {
-                if (!newIndex.ContainsKey(kvp.Key))
+                if (wordsToDelete is null || !wordsToDelete.Contains(kvp.Key))
                 {
-                    newIndex[kvp.Key] = new SearchIndexSortedSet();
-                }
-
-                foreach (var entry in kvp.Value)
-                {
-                    if (!entries.Contains(entry))
+                    if (!newIndex.ContainsKey(kvp.Key))
                     {
-                        if (!newIndex[kvp.Key].Contains(entry))
-                            newIndex[kvp.Key].Add(entry);
+                        newIndex[kvp.Key] = new SearchIndexSortedSet();
+                    }
+
+                    foreach (var entry in kvp.Value)
+                    {
+                        if (!entries.Contains(entry))
+                        {
+                            if (!newIndex[kvp.Key].Contains(entry))
+                                newIndex[kvp.Key].Add(entry);
+                        }
                     }
                 }
             }
@@ -82,7 +89,7 @@ public class ReverseSearchIndex : SearchIndexBase<Dictionary<string, SearchIndex
             return Array.Empty<SearchIndexEntryId>();
         }
     }
-    
+
     public int Count(IEnumerable<string> keyWords,
         DateTime? leftBorder, DateTime? rightBorder)
     {

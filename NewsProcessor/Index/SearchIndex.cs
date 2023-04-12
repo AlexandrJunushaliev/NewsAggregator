@@ -14,21 +14,23 @@ public class SearchIndex : SearchIndexBase<Dictionary<SearchIndexEntryId, HashSe
         _logger = logger;
     }
 
-    public async Task AddToIndex(Dictionary<SearchIndexEntry, HashSet<string>> newEntries)
+    public async Task AddToIndex(Dictionary<SearchIndexEntry, HashSet<string>> newEntries,
+        HashSet<string>? wordsToDelete)
     {
         await _semaphore.WaitAsync();
         {
             _logger.LogInformation("Start adding to index");
             var sw = new Stopwatch();
             sw.Start();
-            var entries = newEntries.Keys.Select(x=>x.Id).ToArray();
+            var entries = newEntries.Keys.Select(x => x.Id).ToArray();
             var newIndex = new Dictionary<SearchIndexEntryId, HashSet<string>>();
             foreach (var kvp in newEntries)
             {
                 newIndex[kvp.Key.Id] = new HashSet<string>();
                 foreach (var entry in kvp.Value)
                 {
-                    newIndex[kvp.Key.Id].Add(entry);
+                    if (wordsToDelete is null || !wordsToDelete.Contains(entry))
+                        newIndex[kvp.Key.Id].Add(entry);
                 }
             }
 
@@ -36,6 +38,12 @@ public class SearchIndex : SearchIndexBase<Dictionary<SearchIndexEntryId, HashSe
             {
                 if (!entries.Contains(kvp.Key))
                 {
+                    if (wordsToDelete is not null)
+                        foreach (var word in wordsToDelete)
+                        {
+                            kvp.Value.Remove(word);
+                        }
+
                     newIndex.Add(kvp.Key, kvp.Value);
                 }
             }
