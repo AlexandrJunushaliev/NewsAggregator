@@ -24,7 +24,8 @@ public class NewsController
 
     [HttpGet]
     [Route("")]
-    public async Task<ApiNews[]?> GetNews(string[]? keywords, int take = 30, int skip = 0, bool reverseOrder = false,
+    public async Task<IEnumerable<ApiNews>?> GetNews(string[]? keywords, int take = 30, int skip = 0,
+        bool reverseOrder = false,
         string? leftBorder = null, string? rightBorder = null)
     {
         (DateTime leftDt, DateTime rightDt) = (default, default);
@@ -70,14 +71,22 @@ public class NewsController
         }
 
         var foundByKeywords =
-            await _searchIndexClient.SearchByKeywords(keywords, take, skip, reverseOrder, leftDt, rightDt);
+            await _searchIndexClient.SearchByKeywordsWithKeywords(keywords, take, skip, reverseOrder, leftDt, rightDt);
         if (foundByKeywords == null)
             return null;
-        return _context.Articles.Select(x => new ApiNews
+        var apiNews = _context.Articles.Select(x => new ApiNews
         {
             NewsText = x.Text, RegistrationDate = x.RegistrationDate, SourceName = x.SourceName,
             SourceSite = x.SourceSite, Title = x.Title, Header = x.Header, Id = x.Id
-        }).Where(x => foundByKeywords.Contains(x.Id)).ToArray();
+        }).Where(x => foundByKeywords.Keys.Contains(x.Id)).ToArray();
+        foreach (var entry in apiNews)
+        {
+            entry.Keywords = foundByKeywords[entry.Id];
+        }
+
+        return !reverseOrder
+            ? apiNews.OrderByDescending(x => x.RegistrationDate)
+            : apiNews.OrderBy(x => x.RegistrationDate);
     }
 
     [HttpGet]

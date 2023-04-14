@@ -16,6 +16,7 @@ public class SearchIndexClient
     private readonly Uri _searchUri;
     private readonly Uri _countUri;
     private readonly Uri _getAvailableKeywordsUri;
+    private readonly Uri _searchWithKeywordsByKeywordsUri;
 
     public SearchIndexClient(IConfiguration configuration, ILogger<SearchIndexClient> logger)
     {
@@ -26,6 +27,7 @@ public class SearchIndexClient
         _searchKeywordsUri = new Uri(searchIndexUri + "/search/keywords");
         _countUri = new Uri(searchIndexUri + "/search/count");
         _getAvailableKeywordsUri = new Uri(searchIndexUri + "/search/availableKeywords");
+        _searchWithKeywordsByKeywordsUri = new Uri(searchIndexUri + "/search/searchWithKeywords");
     }
 
     public async Task<Dictionary<string, string[]>?> GetKeywords(IEnumerable<ApiNews> articles)
@@ -33,6 +35,29 @@ public class SearchIndexClient
         var ids = articles.Select(x => new SearchIndexEntryId(x.Id, x.RegistrationDate));
         var uri = new UriBuilder(_searchKeywordsUri)
             { Query = $"ids={string.Join(',', ids.Select(SearchIndexEntryIdJsonConverter.GetIdAsJsonString))}" };
+        var response =
+            await HttpCall.Get<Dictionary<SearchIndexEntryId, string[]>>(uri.Uri,
+                jsonSerializerOptions: Options);
+        if (!response.HasResponse)
+        {
+            _logger.LogCritical($"Unable to get response from {response.RequestUri}");
+            return default;
+        }
+
+        return response.Response
+            .ToDictionary(x => x.Key.Id, x => x.Value);
+    }
+
+    public async Task<Dictionary<string, string[]>?> SearchByKeywordsWithKeywords(string[] keywords, int take = 100,
+        int skip = 0,
+        bool fromOlder = false,
+        DateTime left = default, DateTime right = default)
+    {
+        var uri = new UriBuilder(_searchWithKeywordsByKeywordsUri)
+        {
+            Query =
+                $"keywords={string.Join(',', keywords)}&take={take}&skip={skip}&fromOlder={fromOlder}{(left == default ? string.Empty : $"&left={left:dd.MM.yyyy}")}{(right == default ? string.Empty : $"&right={right:dd.MM.yyyy}")}"
+        };
         var response =
             await HttpCall.Get<Dictionary<SearchIndexEntryId, string[]>>(uri.Uri,
                 jsonSerializerOptions: Options);

@@ -8,9 +8,9 @@ class ApiClient {
     }
 
     public async GetNews(keywords: string[] | null, take: number, skip: number, reverseDateOrder: boolean, leftBorder: Date | null, rightBorder: Date | null): Promise<ApiNews[] | null> {
-        const keywordsParam = keywords === null ? "" : `keywords=${keywords.join(',')}&`
-        const leftBorderParam = leftBorder === null ? "" : `&leftBorder=${leftBorder.toDateString()}`
-        const rightBorderParam = rightBorder === null ? "" : `&rightBorder=${rightBorder.toDateString()}`
+        const keywordsParam = keywords === null || keywords.length === 0 ? "" : `keywords=${keywords.join(',')}&`
+        const leftBorderParam = leftBorder === null ? "" : `&leftBorder=${leftBorder.toLocaleDateString()}`
+        const rightBorderParam = rightBorder === null ? "" : `&rightBorder=${rightBorder.toLocaleDateString()}`
         const query = `/news?${keywordsParam}take=${take}&skip=${skip}&reverseOrder=${reverseDateOrder}${leftBorderParam}${rightBorderParam}`
         return await this.fetch<ApiNews[]>(query)
     }

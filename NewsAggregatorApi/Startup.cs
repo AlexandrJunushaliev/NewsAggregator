@@ -20,6 +20,8 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
+        services.AddCors(o => o.AddDefaultPolicy(x =>
+            x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader().SetIsOriginAllowed((host) => true)));
         services.AddControllers().AddJsonOptions(options =>
         {
             options.JsonSerializerOptions.Converters.Add(new SearchIndexEntryIdJsonConverter());
@@ -44,6 +46,7 @@ public class Startup
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        app.UseCors();
         app.UseHttpsRedirection();
 
         app.UseRouting();

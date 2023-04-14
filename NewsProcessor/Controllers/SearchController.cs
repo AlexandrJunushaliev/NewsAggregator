@@ -50,7 +50,7 @@ public class SearchController
     public Dictionary<SearchIndexEntryId, HashSet<string>> GetKeyWords(string ids)
     {
         var split = ids.Split(",");
-        return _searchIndex.FindKeyWords(split.Select(x =>
+        var idsParsed = split.Select(x =>
         {
             if (!SearchIndexEntryId.TryParse(x, out var id))
             {
@@ -58,7 +58,21 @@ public class SearchController
             }
 
             return id;
-        }));
+        });
+        return GetKeyWordsForSearchIndexEntryIds(idsParsed);
+    }
+
+    private Dictionary<SearchIndexEntryId, HashSet<string>> GetKeyWordsForSearchIndexEntryIds(
+        IEnumerable<SearchIndexEntryId> ids) =>
+        _searchIndex.FindKeyWords(ids);
+
+    [HttpGet]
+    [Route("searchWithKeywords")]
+    public Dictionary<SearchIndexEntryId, HashSet<string>> SearchWithKeywords(string keywords,
+        int take = 100, int skip = 0, bool fromOlder = false,
+        string? left = null, string? right = null)
+    {
+        return GetKeyWordsForSearchIndexEntryIds(Get(keywords, take, skip, fromOlder, left, right));
     }
 
     [HttpGet]
@@ -79,9 +93,8 @@ public class SearchController
         return _reverseSearchIndex.Count(keywords, leftDt == default ? null : leftDt,
             rightDt == default ? null : rightDt.AddDays(1));
     }
-    
+
     [HttpGet]
     [Route("availableKeywords")]
     public IEnumerable<string> GetAvailableKeywords() => _configuration.GetSection("keyWords").Get<string[]>()!;
-
 }

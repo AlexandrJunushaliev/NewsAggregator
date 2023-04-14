@@ -42,7 +42,7 @@ public class HttpResponse<T>
 
 public class HttpCall
 {
-    public static async Task<HttpResponse<T>> Get<T>(Uri uri, int timeoutMs = 2000,
+    public static async Task<HttpResponse<T>> Get<T>(Uri uri, int timeoutMs = 300,
         JsonSerializerOptions? jsonSerializerOptions = null)
     {
         var options = new RestClientOptions
