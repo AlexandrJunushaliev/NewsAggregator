@@ -2,24 +2,27 @@
 using NewsAggregatorApi.Domain;
 using NewsAggregatorApi.Infrastructure.EntityFramework;
 using NewsAggregatorApi.Models;
+using SelectPdf;
 using Utils;
 
 namespace NewsAggregatorApi.Controllers;
 
 [Controller]
 [Route("news")]
-public class NewsController
+public class NewsController : Controller
 {
     private readonly NewsAggregatorContext _context;
     private readonly SearchIndexClient _searchIndexClient;
     private readonly ILogger<NewsController> _logger;
+    private readonly IHttpContextFactory _httpContextFactory;
 
     public NewsController(NewsAggregatorContext context, SearchIndexClient searchIndexClient,
-        ILogger<NewsController> logger)
+        ILogger<NewsController> logger, IHttpContextFactory httpContextFactory)
     {
         _context = context;
         _searchIndexClient = searchIndexClient;
         _logger = logger;
+        _httpContextFactory = httpContextFactory;
     }
 
     [HttpGet]
@@ -61,9 +64,9 @@ public class NewsController
                 return news;
             foreach (var entry in news)
             {
-                if (idsToKeywords.ContainsKey(entry.Id))
+                if (idsToKeywords.TryGetValue(entry.Id, out var keyword))
                 {
-                    entry.Keywords = idsToKeywords[entry.Id];
+                    entry.Keywords = keyword;
                 }
             }
 
@@ -94,5 +97,17 @@ public class NewsController
     public async Task<string[]?> GetAvailableKeywords()
     {
         return await _searchIndexClient.GetAvailableKeywords();
+    }
+
+    [HttpGet]
+    [Route("getPdf")]
+    public IActionResult? GetPdf(string id)
+    {
+        var article = _context.Find<Article>(id);
+        if (article == null)
+            return null;
+        var converter = new HtmlToPdf();
+        var doc = converter.ConvertUrl(article.ArticleUrl);
+        return File(doc.Save(),"application/pdf") ;
     }
 }

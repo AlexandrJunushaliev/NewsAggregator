@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import './App.css'
 import {ApiClient} from "./apiClient";
 import parse from 'html-react-parser';
-import {Button, DatePicker, Layout, Table, TableProps} from "antd";
+import {Button, Checkbox, DatePicker, Layout, Table, TableProps} from "antd";
 import {ColumnsType} from "antd/es/table";
 import {
     CopyTwoTone
@@ -13,6 +13,7 @@ import Paragraph from "antd/lib/typography/Paragraph";
 import 'dayjs/locale/ru';
 import dayjs from 'dayjs';
 import locale from 'antd/es/date-picker/locale/ru_RU';
+import kpfu_svg from './assets/kpfu.svg'
 
 dayjs.locale('ru')
 
@@ -23,16 +24,34 @@ export type ApiNews = {
     sourceName: string
     keywords: string[]
     header: string
-    newsText: string
+    newsText: string,
+    newsUrl: string
 }
 const {RangePicker} = DatePicker
 
-function columns(keywords: string[] | null, expanded: string[], setExpanded: React.Dispatch<React.SetStateAction<string[]>>, dts: [Date, Date] | null, setDts: React.Dispatch<React.SetStateAction<[Date, Date] | null>>): ColumnsType<ApiNews> {
+// это могло бы быть внутри компонента, но уже поздно
+function columns(keywords: string[] | null,
+                 expanded: string[],
+                 setExpanded: React.Dispatch<React.SetStateAction<string[]>>,
+                 dts: [Date, Date] | null,
+                 setDts: React.Dispatch<React.SetStateAction<[Date, Date] | null>>,
+                 ids: string[],
+                 setIds: React.Dispatch<React.SetStateAction<string[]>>): ColumnsType<ApiNews> {
     return [
+        {
+            title: '',
+            dataIndex: 'id',
+            // n^2 complexity lol
+            render: (value) => <Checkbox checked={!!ids.find(x => x == value)} onClick={_ => {
+                const checked = !!ids.find(x => x == value)
+                !checked ? setIds(prev => [...prev, value]) : setIds(prev => prev.filter(x => x !== value))
+            }
+            }/>
+        },
         {
             title: 'Дата публикации',
             dataIndex: 'registrationDate',
-            sorter: (a, b) => 0,
+            sorter: (_, __) => 0,
             sortDirections: ['ascend', 'descend', 'ascend'],
             defaultSortOrder: 'descend',
             render: (value) => new Date(Date.parse(value)).toLocaleDateString(),
@@ -41,12 +60,10 @@ function columns(keywords: string[] | null, expanded: string[], setExpanded: Rea
                                          allowClear/>
         },
         {
-            title: 'Сайт источника',
-            dataIndex: 'sourceSite'
-        },
-        {
             title: 'Название источника',
-            dataIndex: 'sourceName'
+            dataIndex: 'sourceName',
+            render: (_, data) => <a href={data.sourceSite} rel="noopener noreferrer"
+                                    target="_blank">{data.sourceName}</a>
         },
         {
             title: 'Ключевые слова',
@@ -56,7 +73,8 @@ function columns(keywords: string[] | null, expanded: string[], setExpanded: Rea
         },
         {
             title: 'Заголовок',
-            dataIndex: 'header'
+            dataIndex: 'header',
+            render: (_, data) => <a href={data.newsUrl} rel="noopener noreferrer" target="_blank">{data.header}</a>
         },
         {
             title: 'Текст новости',
@@ -97,6 +115,7 @@ function App(props: Props) {
     const [filteredKeywords, setFilteredKeywords] = useState<string[]>([]);
     const [order, setOrder] = useState<'ascend' | 'descend'>('descend');
     const [ellipses, setEllipses] = useState<string[]>([]);
+    const [ids, setIds] = useState<string[]>([]);
     const [dts, setDts] = useState<[Date, Date] | null>(null);
     useEffect(() => {
         const fetchData = async () => {
@@ -120,22 +139,29 @@ function App(props: Props) {
     };
     return (
         <Layout style={{maxHeight: '100vh', height: '100vh', width: '100vw'}}>
-            <Header style={{background: '#012a77', display: "flex"}}>
-                <Title style={{color: 'white', marginRight: '15px', marginTop: 0, marginBottom: 0}}>Новостной
-                    агрегатор</Title>
-                <CopyTwoTone rotate={180} style={{fontSize: '32px'}}/>
+            <Header style={{background: '#012a77', display: "flex", justifyContent: "space-between"}}>
+                <div style={{display: "flex"}}>
+                    <div style={{marginTop:'5px'}}><img src={kpfu_svg} alt={'logo'}/></div>
+                    <Title style={{color: 'white', marginLeft: '20px', marginTop: 5, marginBottom: 0}}>Новостной
+                        агрегатор</Title>
+                </div>
+                {ids.length !== 0 ? <div>
+                    <Button>buba</Button>
+                </div> : <></>}
             </Header>
             <Content><Table loading={loading} style={{maxHeight: '85vh', overflow: "scroll", verticalAlign: "top"}}
-                            columns={columns(keywords, ellipses, setEllipses, dts, setDts)} dataSource={data}
+                            columns={columns(keywords, ellipses, setEllipses, dts, setDts, ids, setIds)}
+                            dataSource={data}
                             rowKey={(n) => n.id}
                             onChange={onChange}
                             pagination={false}/></Content>
 
             <Footer>
                 <div style={{display: 'flex', justifyContent: 'right'}}>
-                    <Button onClick={() => setPage(p => p - 1)}>{"<"}</Button>
+                    <Button disabled={page === 0 || loading} onClick={() => setPage(p => p - 1)}>{"<"}</Button>
                     <div style={{marginLeft: '20px', marginRight: '20px', paddingTop: '2.5px'}}>{page + 1}</div>
-                    <Button onClick={() => setPage(p => p + 1)} style={{marginRight: '20px'}}>{">"}</Button>
+                    <Button disabled={loading} onClick={() => setPage(p => p + 1)}
+                            style={{marginRight: '20px'}}>{">"}</Button>
                 </div>
             </Footer>
         </Layout>

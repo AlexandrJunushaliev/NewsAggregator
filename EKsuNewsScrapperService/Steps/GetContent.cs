@@ -20,7 +20,7 @@ public class GetContents
     public async Task<GetContentResponse[]> Step(GetContentListResponseEntry[] entries)
     {
         var tasks = entries.Select(x => EksuUri.BuildGetContent(x.Id!))
-            .Select<Uri, Func<Task<HttpResponse<GetContentResponse>>>>(x => () => HttpCall.Get<GetContentResponse>(x))
+            .Select<Uri, Func<Task<HttpResponse<GetContentResponse>>>>(x => () => HttpCall.Get<GetContentResponse>(x, timeoutMs:10000))
             .ToList();
         var result = await _limiter.AwaitAll(tasks);
         return result
