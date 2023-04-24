@@ -10,6 +10,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.15" />
         <PackageReference Include="NLog.Extensions.Logging" Version="5.2.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.3" />
+        <PackageReference Include="Select.HtmlToPdf.NetCore" Version="22.2.0" />
     </ItemGroup>
 
     <ItemGroup>
