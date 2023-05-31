@@ -5,7 +5,8 @@ import parse from 'html-react-parser';
 import {Button, Checkbox, DatePicker, Layout, Table, TableProps} from "antd";
 import {ColumnsType} from "antd/es/table";
 import {
-    CopyTwoTone
+    PrinterTwoTone,
+    FilePdfTwoTone
 } from '@ant-design/icons';
 import {Content, Footer, Header} from "antd/lib/layout/layout";
 import Title from "antd/lib/typography/Title";
@@ -14,6 +15,7 @@ import 'dayjs/locale/ru';
 import dayjs from 'dayjs';
 import locale from 'antd/es/date-picker/locale/ru_RU';
 import kpfu_svg from './assets/kpfu.svg'
+import './assets/PTSans-normal'
 
 dayjs.locale('ru')
 
@@ -35,18 +37,21 @@ function columns(keywords: string[] | null,
                  setExpanded: React.Dispatch<React.SetStateAction<string[]>>,
                  dts: [Date, Date] | null,
                  setDts: React.Dispatch<React.SetStateAction<[Date, Date] | null>>,
-                 ids: string[],
-                 setIds: React.Dispatch<React.SetStateAction<string[]>>): ColumnsType<ApiNews> {
+                 onPrint: (id: string) => void,
+                 onPdf: (id: string) => void): ColumnsType<ApiNews> {
     return [
         {
             title: '',
             dataIndex: 'id',
-            // n^2 complexity lol
-            render: (value) => <Checkbox checked={!!ids.find(x => x == value)} onClick={_ => {
-                const checked = !!ids.find(x => x == value)
-                !checked ? setIds(prev => [...prev, value]) : setIds(prev => prev.filter(x => x !== value))
-            }
-            }/>
+            render: (value) =>
+                <div style={{display: 'flex'}}>
+                    <Button style={{marginRight: '4px'}} onClick={(_) => onPrint(value)}>
+                        <PrinterTwoTone/>
+                    </Button>
+                    <Button onClick={(_) => onPdf(value)}>
+                        <FilePdfTwoTone/>
+                    </Button>
+                </div>
         },
         {
             title: 'Дата публикации',
@@ -54,9 +59,21 @@ function columns(keywords: string[] | null,
             sorter: (_, __) => 0,
             sortDirections: ['ascend', 'descend', 'ascend'],
             defaultSortOrder: 'descend',
-            render: (value) => new Date(Date.parse(value)).toLocaleDateString(),
+            render: (value) => {
+                const date = new Date(Date.parse(value));
+                let day: any = date.getUTCDate()
+                if (day < 10) {
+                    day = '0' + day;
+                }
+                let month: any = date.getUTCMonth()+1
+                if (month < 10) {
+                    month = `0${month}`;
+                }
+                return `${day}.${month}.${date.getUTCFullYear()}`;
+            },
             filterDropdown: <RangePicker locale={locale}
                                          onChange={x => x ? setDts([new Date(x[0]!.toDate()), new Date(x[1]!.toDate())]) : setDts(null)}
+                                         disabledDate={x => x.toDate() > new Date()}
                                          allowClear/>
         },
         {
@@ -115,16 +132,19 @@ function App(props: Props) {
     const [filteredKeywords, setFilteredKeywords] = useState<string[]>([]);
     const [order, setOrder] = useState<'ascend' | 'descend'>('descend');
     const [ellipses, setEllipses] = useState<string[]>([]);
-    const [ids, setIds] = useState<string[]>([]);
     const [dts, setDts] = useState<[Date, Date] | null>(null);
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             const skip = page * rowsPerPage;
             const data = await props.apiClient.GetNews(filteredKeywords, rowsPerPage, skip, order === 'ascend', dts ? dts[0] : null, dts ? dts[1] : null)
-            const keywords = await props.apiClient.GetKeywords()
+
+            if (keywords.length === 0) {
+                const apiKeywords = await props.apiClient.GetKeywords()
+                setKeywords(apiKeywords ?? [])
+            }
+
             setData(data ?? []);
-            setKeywords(keywords ?? [])
             setLoading(false);
         };
         fetchData();
@@ -135,22 +155,63 @@ function App(props: Props) {
         if (filters !== null) {
             setFilteredKeywords(filters.keywords as string[] ?? [])
         }
-
     };
+
+    const onPrint = (id: string) => {
+        /* const news = data.find(x => x.id === id)!
+         // почему такие параметры понятия не имею
+         const winPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0')!;
+         winPrint.document.write(`<p>${new Date(Date.parse(news.registrationDate)).toLocaleDateString()}</p>`);
+         winPrint.document.write(`<h1>${news.header}</h1>`);
+         winPrint.document.write(news.newsText);
+         winPrint.document.close();
+         winPrint.focus();
+         winPrint.print();
+         setTimeout(()=>winPrint.close(), 200)*/
+        window.open(`https://kpfu.ru/new_print?p_cid=${id}`, '_blank')?.focus()
+    }
+
+    const onPdf = (id: string) => {
+        window.open(`https://kpfu.ru/pdf/portal/content/${id}.pdf`, '_blank')?.focus()
+        /*const news = data.find(x => x.id === id)!
+        const winPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0')!;
+        winPrint.document.write('<html><body style="/!*justify-content: left; display:flex; flex-direction: column;*!/ font-family: PTSans,serif; font-size: 8px; /!*height: 100vh;*!/ ">' + news.newsText + '</body></html>');
+        winPrint.document.close();
+        winPrint.focus();
+        const doc = new jsPDF('p', 'pt', 'letter'/!*"a4"*!/, false);
+        const margins = {
+            top: 40,
+            bottom: 60,
+            left: 40,
+            width: winPrint.innerWidth
+        };
+        doc.setFont('PTSans');
+        //doc.setFontSize(4);
+        doc.html(winPrint.document.body/!* `<div style="font-family: PTSans,serif; font-size: 8px; width: 522px">${news.newsText}</div>`*!/, {
+            callback: function (doc) {
+                doc.save(`${id}.pdf`);
+            },
+            autoPaging: "text",
+            width: margins.width,
+            x: /!*margins.left*!/0,
+            y: /!*margins.top*!/0,
+            margin: [margins.top, margins.left, margins.bottom, margins.left],
+            windowWidth: winPrint.innerWidth
+        })*/
+        //winPrint.close();
+    }
+
     return (
         <Layout style={{maxHeight: '100vh', height: '100vh', width: '100vw'}}>
             <Header style={{background: '#012a77', display: "flex", justifyContent: "space-between"}}>
                 <div style={{display: "flex"}}>
-                    <div style={{marginTop:'5px'}}><img src={kpfu_svg} alt={'logo'}/></div>
+                    <div style={{marginTop: '5px'}}><img src={kpfu_svg} alt={'logo'}/></div>
                     <Title style={{color: 'white', marginLeft: '20px', marginTop: 5, marginBottom: 0}}>Новостной
                         агрегатор</Title>
                 </div>
-                {ids.length !== 0 ? <div>
-                    <Button>buba</Button>
-                </div> : <></>}
             </Header>
             <Content><Table loading={loading} style={{maxHeight: '85vh', overflow: "scroll", verticalAlign: "top"}}
-                            columns={columns(keywords, ellipses, setEllipses, dts, setDts, ids, setIds)}
+                            columns={columns(keywords, ellipses, setEllipses, dts, setDts, onPrint, onPdf)}
                             dataSource={data}
                             rowKey={(n) => n.id}
                             onChange={onChange}
