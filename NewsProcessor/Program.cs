@@ -35,7 +35,7 @@ class Program
         services.AddHostedService<NewsProcessorService>();
         services.AddSingleton<ConnectionFactory>(_ => new ConnectionFactory()
         {
-            HostName = "localhost"
+            HostName = "rabbitmq"
         });
         services.AddSingleton<ReverseSearchIndex>(sp =>
         {

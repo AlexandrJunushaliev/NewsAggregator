@@ -20,7 +20,8 @@ public class EKsuNewsScrapperBase
     {
         serviceCollection.AddSingleton<ConnectionFactory>(_ => new ConnectionFactory()
         {
-            HostName = "localhost"
+            HostName = "rabbitmq",
+            Port = 5672
         });
         serviceCollection.AddSingleton<NewsRabbitMqProducer>();
         serviceCollection.AddSingleton<NewsApiRabbitMqProducer>();
