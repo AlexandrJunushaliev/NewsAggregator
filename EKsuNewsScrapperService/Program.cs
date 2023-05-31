@@ -6,18 +6,19 @@ using EKsuNewsScrapperService.Steps;
 using Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NLog.Config;
+using NLog.Extensions.Logging;
 using RabbitMQ.Client;
 using Utils;
 
 namespace EKsuNewsScrapperService;
 
-public class EKsuNewsScrapperBase : NewsScrapperBase.NewsScrapperBase
+public class EKsuNewsScrapperBase
 {
-    public override Type GetBackgroundServiceType() => typeof(EKsuNewsScrapperService);
-
-    public override void AppendSettings(HostBuilderContext context, IServiceCollection serviceCollection)
+    public static void AppendSettings(HostBuilderContext _, IServiceCollection serviceCollection)
     {
-        serviceCollection.AddSingleton<ConnectionFactory>(sp => new ConnectionFactory()
+        serviceCollection.AddSingleton<ConnectionFactory>(_ => new ConnectionFactory()
         {
             HostName = "localhost"
         });
@@ -26,12 +27,24 @@ public class EKsuNewsScrapperBase : NewsScrapperBase.NewsScrapperBase
         serviceCollection.AddSingleton<GetContents>();
         serviceCollection.AddSingleton<GetContentList>();
         serviceCollection.AddSingleton<SendToRabbit>();
-        serviceCollection.AddSingleton<Limiter>(sp=>new Limiter(5));
+        serviceCollection.AddSingleton<Limiter>(_ => new Limiter(5));
     }
 
-    public new static async Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        await NewsScrapperBase.NewsScrapperBase.Main(args);
+        await Host.CreateDefaultBuilder(args)
+            .ConfigureServices((context, services) =>
+            {
+                services.AddHostedService<EKsuNewsScrapperService>();
+                services.AddLogging(builder =>
+                {
+                    builder.ClearProviders();
+                    builder.SetMinimumLevel(LogLevel.Trace);
+                    builder.AddNLog(new XmlLoggingConfiguration("NLog.config"));
+                });
+                AppendSettings(context, services);
+            })
+            .RunConsoleAsync();
     }
 }
