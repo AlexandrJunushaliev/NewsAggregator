@@ -1,0 +1,67 @@
+version: "3.7"
+services:
+  front:
+    build:
+      context: ./news-aggreagator-app/
+    ports:
+      - "80:80"
+    container_name: news-aggreagator-app
+    volumes:
+      - ./news-aggreagator-app/node_modules:/app/node_modules
+
+  api-server:
+    build:
+      context: .
+      dockerfile: ./NewsAggregatorApi/Dockerfile
+    container_name: api-server
+    expose:
+      - "6223"
+    depends_on:
+      - db
+      - rabbitmq
+  daemon:
+    build:
+      context: .
+      dockerfile: ./EKsuNewsScrapperService/Dockerfile
+    container_name: daemon
+    ports:
+      - "9229:9229"
+    expose:
+      - "4000"
+    depends_on:
+      - rabbitmq
+
+  news-processor:
+    build:
+      context: .
+      dockerfile: ./NewsProcessor/Dockerfile
+    container_name: news-processor
+    ports:
+      - "9230:9230"
+    expose:
+      - "4300"
+    depends_on:
+      - rabbitmq
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  rabbitmq:
+    image: rabbitmq:management
+    restart: always
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5672" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "5672:5672"
+      - "15672:15672"

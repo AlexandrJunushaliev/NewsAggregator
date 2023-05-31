@@ -39,7 +39,7 @@ public class Startup
         services.AddHostedService<NewsAggreagatorApiService>();
         services.AddSingleton<ConnectionFactory>(_ => new ConnectionFactory()
         {
-            HostName = "localhost"
+            HostName = "rabbitmq"
         });
         services.AddSingleton<SearchIndexClient>();
     }
@@ -47,7 +47,6 @@ public class Startup
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         app.UseCors();
-        app.UseHttpsRedirection();
 
         app.UseRouting();
 
